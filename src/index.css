@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Colores principales del diseño */
+  --color-primary: #2a14b4;
+  --color-secondary: #008080;
+  --color-on-surface: #1a1a2e;
+  --color-on-surface-variant: #5c5c6f;
+  --color-outline: #8e8e9a;
+  --color-secondary-container: #e0f5f3;
+  --color-on-secondary-container: #004d47;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Clases de color personalizadas para Tailwind */
+.text-primary { color: var(--color-primary); }
+.bg-primary { background-color: var(--color-primary); }
+.text-secondary { color: var(--color-secondary); }
+.bg-secondary { background-color: var(--color-secondary); }
+.text-on-surface { color: var(--color-on-surface); }
+.text-on-surface-variant { color: var(--color-on-surface-variant); }
+.text-outline { color: var(--color-outline); }
+.bg-secondary-container { background-color: var(--color-secondary-container); }
+.text-on-secondary-container { color: var(--color-on-secondary-container); }
+.border-outline { border-color: var(--color-outline); }
+
+/* Animaciones */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
