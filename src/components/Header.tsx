@@ -14,7 +14,7 @@ interface HeaderProps {
   onOpenPublishModal: () => void;
 }
 
-export default function Header({ currentTab, onChangeTab, currentUser, onOpenPublishModal }: HeaderProps) {
+export default function Header({ currentTab, onChangeTab, currentUser: _currentUser, onOpenPublishModal }: HeaderProps) {
   const { profile, signOut } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
 

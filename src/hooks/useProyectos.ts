@@ -62,7 +62,7 @@ export function useProyectos() {
       return { success: false, error: 'Debes iniciar sesión' };
     }
 
-    const { data, error } = await crearProyecto({
+    const { error } = await crearProyecto({
       ...datos,
       autor_id: user.id,
     });
