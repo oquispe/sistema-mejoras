@@ -23,9 +23,13 @@ import {
   FaseConcurso,
   Evaluacion,
   EvaluacionConJurado,
-  RankingProyecto
+  RankingProyecto,
+  Avance,
+  AvanceConDetalles,
+  AvanceVistaConUsuario,
+  HORAS_EXPIRACION_AVANCE
 } from '../types';
-import { eliminarArchivoProyecto } from './storage';
+import { eliminarArchivoProyecto, eliminarMediaAvance } from './storage';
 
 // ============================================================
 // PROYECTOS
@@ -1374,4 +1378,284 @@ export async function contarEvaluacionesPendientes(
     evaluadas,
     pendientes: (total || 0) - evaluadas,
   };
+}
+
+// ============================================================
+// AVANCES (Stories temporales)
+// ============================================================
+
+/**
+ * Obtener avances vigentes (últimas 24h, no expirados)
+ * Agrupa por autor para mostrar en la barra de stories
+ */
+export async function getAvancesVigentes(userId?: string): Promise<AvanceConDetalles[]> {
+  // Calcular fecha límite (24h atrás)
+  const fechaLimite = new Date();
+  fechaLimite.setHours(fechaLimite.getHours() - HORAS_EXPIRACION_AVANCE);
+
+  const { data, error } = await supabase
+    .from('avances')
+    .select(`
+      *,
+      autor:profiles!autor_id (
+        nombre_completo,
+        avatar_url,
+        area
+      ),
+      proyecto:proyectos!proyecto_id (
+        titulo
+      )
+    `)
+    .eq('expirado', false)
+    .gte('created_at', fechaLimite.toISOString())
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error obteniendo avances:', error.message);
+    return [];
+  }
+
+  // Obtener vistas del usuario actual si está autenticado
+  let misVistas: string[] = [];
+  if (userId) {
+    const { data: vistasData } = await supabase
+      .from('avances_vistas')
+      .select('avance_id')
+      .eq('usuario_id', userId);
+    misVistas = (vistasData || []).map(v => v.avance_id);
+  }
+
+  return (data || []).map((a: any) => ({
+    ...a,
+    autor_nombre: a.autor?.nombre_completo || 'Usuario',
+    autor_avatar: a.autor?.avatar_url,
+    autor_area: a.autor?.area || 'General',
+    proyecto_titulo: a.proyecto?.titulo,
+    visto_por_mi: misVistas.includes(a.id),
+  }));
+}
+
+/**
+ * Obtener avances de un autor específico
+ */
+export async function getAvancesDeAutor(autorId: string): Promise<AvanceConDetalles[]> {
+  const fechaLimite = new Date();
+  fechaLimite.setHours(fechaLimite.getHours() - HORAS_EXPIRACION_AVANCE);
+
+  const { data, error } = await supabase
+    .from('avances')
+    .select(`
+      *,
+      autor:profiles!autor_id (
+        nombre_completo,
+        avatar_url,
+        area
+      ),
+      proyecto:proyectos!proyecto_id (
+        titulo
+      )
+    `)
+    .eq('autor_id', autorId)
+    .eq('expirado', false)
+    .gte('created_at', fechaLimite.toISOString())
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error('Error obteniendo avances del autor:', error.message);
+    return [];
+  }
+
+  return (data || []).map((a: any) => ({
+    ...a,
+    autor_nombre: a.autor?.nombre_completo || 'Usuario',
+    autor_avatar: a.autor?.avatar_url,
+    autor_area: a.autor?.area || 'General',
+    proyecto_titulo: a.proyecto?.titulo,
+  }));
+}
+
+/**
+ * Obtener avances de un proyecto específico
+ */
+export async function getAvancesDeProyecto(proyectoId: string): Promise<AvanceConDetalles[]> {
+  const fechaLimite = new Date();
+  fechaLimite.setHours(fechaLimite.getHours() - HORAS_EXPIRACION_AVANCE);
+
+  const { data, error } = await supabase
+    .from('avances')
+    .select(`
+      *,
+      autor:profiles!autor_id (
+        nombre_completo,
+        avatar_url,
+        area
+      )
+    `)
+    .eq('proyecto_id', proyectoId)
+    .eq('expirado', false)
+    .gte('created_at', fechaLimite.toISOString())
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error obteniendo avances del proyecto:', error.message);
+    return [];
+  }
+
+  return (data || []).map((a: any) => ({
+    ...a,
+    autor_nombre: a.autor?.nombre_completo || 'Usuario',
+    autor_avatar: a.autor?.avatar_url,
+    autor_area: a.autor?.area || 'General',
+  }));
+}
+
+/**
+ * Crear un nuevo avance
+ */
+export async function crearAvance(avance: {
+  autor_id: string;
+  proyecto_id?: string | null;
+  tipo_media: 'foto' | 'video';
+  media_url: string;
+  storage_path: string;
+  texto_opcional?: string;
+}): Promise<{ data: Avance | null; error: string | null }> {
+  const { data, error } = await supabase
+    .from('avances')
+    .insert({
+      autor_id: avance.autor_id,
+      proyecto_id: avance.proyecto_id || null,
+      tipo_media: avance.tipo_media,
+      media_url: avance.media_url,
+      storage_path: avance.storage_path,
+      texto_opcional: avance.texto_opcional || null,
+      expirado: false,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creando avance:', error.message);
+    return { data: null, error: error.message };
+  }
+
+  return { data, error: null };
+}
+
+/**
+ * Eliminar un avance (solo el autor puede)
+ */
+export async function eliminarAvance(avanceId: string): Promise<{ error: string | null }> {
+  // Primero obtener el avance para eliminar el archivo
+  const { data: avance, error: fetchError } = await supabase
+    .from('avances')
+    .select('storage_path')
+    .eq('id', avanceId)
+    .single();
+
+  if (fetchError || !avance) {
+    return { error: 'Avance no encontrado' };
+  }
+
+  // Eliminar del storage
+  await eliminarMediaAvance(avance.storage_path);
+
+  // Eliminar de la BD
+  const { error } = await supabase
+    .from('avances')
+    .delete()
+    .eq('id', avanceId);
+
+  if (error) {
+    console.error('Error eliminando avance:', error.message);
+    return { error: error.message };
+  }
+
+  return { error: null };
+}
+
+/**
+ * Registrar que un usuario vio un avance
+ */
+export async function registrarVistaAvance(
+  avanceId: string,
+  usuarioId: string
+): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from('avances_vistas')
+    .insert({
+      avance_id: avanceId,
+      usuario_id: usuarioId,
+    });
+
+  // Ignorar error de duplicado (ya vio este avance)
+  if (error && error.code !== '23505') {
+    console.error('Error registrando vista:', error.message);
+    return { error: error.message };
+  }
+
+  return { error: null };
+}
+
+/**
+ * Obtener quiénes vieron un avance (solo el autor puede ver esto)
+ */
+export async function getVistasAvance(avanceId: string): Promise<AvanceVistaConUsuario[]> {
+  const { data, error } = await supabase
+    .from('avances_vistas')
+    .select(`
+      *,
+      usuario:profiles!usuario_id (
+        nombre_completo,
+        avatar_url
+      )
+    `)
+    .eq('avance_id', avanceId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error obteniendo vistas:', error.message);
+    return [];
+  }
+
+  return (data || []).map((v: any) => ({
+    ...v,
+    usuario_nombre: v.usuario?.nombre_completo || 'Usuario',
+    usuario_avatar: v.usuario?.avatar_url,
+  }));
+}
+
+/**
+ * Contar vistas de un avance
+ */
+export async function contarVistasAvance(avanceId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('avances_vistas')
+    .select('*', { count: 'exact', head: true })
+    .eq('avance_id', avanceId);
+
+  if (error) {
+    console.error('Error contando vistas:', error.message);
+    return 0;
+  }
+
+  return count || 0;
+}
+
+/**
+ * Obtener proyectos del usuario para ligar a un avance
+ */
+export async function getMisProyectosParaAvance(userId: string): Promise<{ id: string; titulo: string }[]> {
+  const { data, error } = await supabase
+    .from('proyectos')
+    .select('id, titulo')
+    .eq('autor_id', userId)
+    .order('updated_at', { ascending: false });
+
+  if (error) {
+    console.error('Error obteniendo proyectos:', error.message);
+    return [];
+  }
+
+  return data || [];
 }

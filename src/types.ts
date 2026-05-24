@@ -348,3 +348,60 @@ export const TIPOS_DOCUMENTO = [
 export const MAX_ARCHIVOS_POR_PROYECTO = 10;
 export const MAX_TAMANIO_IMAGEN = 5 * 1024 * 1024; // 5MB
 export const MAX_TAMANIO_DOCUMENTO = 10 * 1024 * 1024; // 10MB
+
+// ============================================================
+// FASE 4: AVANCES (Stories temporales)
+// ============================================================
+
+/**
+ * Avance (tabla: avances)
+ * Estados temporales tipo stories que expiran a las 24h
+ */
+export interface Avance {
+  id: string;
+  autor_id: string;
+  proyecto_id: string | null;
+  tipo_media: 'foto' | 'video';
+  media_url: string;
+  storage_path: string;
+  texto_opcional: string | null;
+  created_at: string;
+  expirado: boolean;
+}
+
+/**
+ * Avance con información del autor y proyecto
+ */
+export interface AvanceConDetalles extends Avance {
+  autor_nombre: string;
+  autor_avatar: string | null;
+  autor_area: string;
+  proyecto_titulo?: string;
+  // Calculado en cliente
+  vistas_count?: number;
+  visto_por_mi?: boolean;
+}
+
+/**
+ * Vista de un avance (tabla: avances_vistas)
+ */
+export interface AvanceVista {
+  id: string;
+  avance_id: string;
+  usuario_id: string;
+  created_at: string;
+}
+
+/**
+ * Vista con información del usuario que vio
+ */
+export interface AvanceVistaConUsuario extends AvanceVista {
+  usuario_nombre: string;
+  usuario_avatar: string | null;
+}
+
+// Constantes para avances
+export const MAX_TAMANIO_VIDEO_AVANCE = 25 * 1024 * 1024; // 25MB
+export const MAX_DURACION_VIDEO_AVANCE = 30; // 30 segundos
+export const TIPOS_VIDEO_AVANCE = ['video/mp4', 'video/webm', 'video/quicktime'] as const;
+export const HORAS_EXPIRACION_AVANCE = 24;

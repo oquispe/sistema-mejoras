@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, FormEvent } from "react";
-import { ProyectoConStats, ProyectoArchivo, ArchivoLocal, AREAS_EJEMPLO, ConcursoConStats } from "./types";
+import { useState, useEffect, FormEvent, useCallback } from "react";
+import { ProyectoConStats, ProyectoArchivo, ArchivoLocal, AREAS_EJEMPLO, ConcursoConStats, AvanceConDetalles } from "./types";
 import Header from "./components/Header";
 import LoginPage from "./components/LoginPage";
 import Comentarios from "./components/Comentarios";
@@ -17,6 +17,9 @@ import EvaluacionJurado from "./components/EvaluacionJurado";
 import ConcursoBanner from "./components/ConcursoBanner";
 import SeleccionarProyectoModal from "./components/SeleccionarProyectoModal";
 import NotificacionesPanel from "./components/NotificacionesPanel";
+import BarraAvances from "./components/BarraAvances";
+import CrearAvanceModal from "./components/CrearAvanceModal";
+import VisorAvance from "./components/VisorAvance";
 import { motion, AnimatePresence } from "motion/react";
 import { useAuth } from "./context/AuthContext";
 import { useProyectos } from "./hooks/useProyectos";
@@ -68,6 +71,12 @@ export default function App() {
   const [showSeleccionarProyectoModal, setShowSeleccionarProyectoModal] = useState(false);
   const [concursoParaPostular, setConcursoParaPostular] = useState<ConcursoConStats | null>(null);
 
+  // Estados para avances (stories)
+  const [showCrearAvanceModal, setShowCrearAvanceModal] = useState(false);
+  const [showVisorAvance, setShowVisorAvance] = useState(false);
+  const [avancesParaVer, setAvancesParaVer] = useState<AvanceConDetalles[]>([]);
+  const [avancesKey, setAvancesKey] = useState(0); // Para forzar recarga de la barra
+
   // Formulario de nuevo proyecto
   const [formTitulo, setFormTitulo] = useState("");
   const [formDescripcion, setFormDescripcion] = useState("");
@@ -100,6 +109,26 @@ export default function App() {
     const data = await getConcursosActivos();
     setConcursosActivos(data);
   }
+
+  // Funciones para avances (stories)
+  const handleCrearAvance = useCallback(() => {
+    setShowCrearAvanceModal(true);
+  }, []);
+
+  const handleVerAvances = useCallback((_autorId: string, avances: AvanceConDetalles[]) => {
+    setAvancesParaVer(avances);
+    setShowVisorAvance(true);
+  }, []);
+
+  const handleAvanceCreado = useCallback(() => {
+    setAvancesKey(prev => prev + 1); // Forzar recarga de la barra
+    triggerToast("¡Avance publicado!");
+  }, []);
+
+  const handleAvanceEliminado = useCallback(() => {
+    setAvancesKey(prev => prev + 1);
+    triggerToast("Avance eliminado");
+  }, []);
 
   // Auto hide toast
   useEffect(() => {
@@ -381,6 +410,18 @@ export default function App() {
         }}
         onVerProyecto={handleSelectProject}
       />
+
+      {/* Barra de Avances (Stories) - Solo en feed */}
+      {currentTab === "feed" && (
+        <BarraAvances
+          key={avancesKey}
+          userId={user.id}
+          userAvatar={profile?.avatar_url}
+          userName={profile?.nombre_completo}
+          onCrearAvance={handleCrearAvance}
+          onVerAvances={handleVerAvances}
+        />
+      )}
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 md:px-10 py-6 md:py-8 flex-grow w-full">
@@ -1332,6 +1373,29 @@ export default function App() {
             cargarConcursosActivos();
             triggerToast("¡Proyecto postulado al concurso!");
           }}
+        />
+      )}
+
+      {/* Modal de Crear Avance (Story) */}
+      <CrearAvanceModal
+        isOpen={showCrearAvanceModal}
+        onClose={() => setShowCrearAvanceModal(false)}
+        userId={user.id}
+        onAvanceCreado={handleAvanceCreado}
+      />
+
+      {/* Visor de Avances */}
+      {showVisorAvance && avancesParaVer.length > 0 && (
+        <VisorAvance
+          avances={avancesParaVer}
+          userId={user.id}
+          onClose={() => {
+            setShowVisorAvance(false);
+            setAvancesParaVer([]);
+            setAvancesKey(prev => prev + 1); // Refrescar para actualizar vistas
+          }}
+          onVerProyecto={handleSelectProject}
+          onAvanceEliminado={handleAvanceEliminado}
         />
       )}
     </div>

@@ -8,6 +8,8 @@ import {
   TIPOS_DOCUMENTO,
   MAX_TAMANIO_IMAGEN,
   MAX_TAMANIO_DOCUMENTO,
+  MAX_TAMANIO_VIDEO_AVANCE,
+  TIPOS_VIDEO_AVANCE,
 } from '../types';
 
 const BUCKET_ARCHIVOS = 'proyecto-archivos';
@@ -293,5 +295,117 @@ export async function subirAvatar(
   } catch (err) {
     console.error('Error inesperado:', err);
     return { url: null, error: 'Error al subir la imagen' };
+  }
+}
+
+// ============================================================
+// AVANCES (Stories) - Bucket "avances"
+// ============================================================
+
+const BUCKET_AVANCES = 'avances';
+
+/**
+ * Validar archivo de avance (foto o video)
+ */
+export function validarArchivoAvance(file: File): {
+  valido: boolean;
+  tipo: 'foto' | 'video' | null;
+  error?: string;
+} {
+  // Verificar si es imagen
+  if ((TIPOS_IMAGEN as readonly string[]).includes(file.type)) {
+    if (file.size > MAX_TAMANIO_IMAGEN) {
+      return { valido: false, tipo: null, error: 'La imagen es muy grande. Máximo 5MB.' };
+    }
+    return { valido: true, tipo: 'foto' };
+  }
+
+  // Verificar si es video
+  if ((TIPOS_VIDEO_AVANCE as readonly string[]).includes(file.type)) {
+    if (file.size > MAX_TAMANIO_VIDEO_AVANCE) {
+      return { valido: false, tipo: null, error: 'El video es muy grande. Máximo 25MB.' };
+    }
+    return { valido: true, tipo: 'video' };
+  }
+
+  return {
+    valido: false,
+    tipo: null,
+    error: 'Tipo de archivo no permitido. Usa imágenes (JPG, PNG, GIF, WebP) o videos (MP4, WebM).'
+  };
+}
+
+/**
+ * Subir media para un avance (foto o video)
+ */
+export async function subirMediaAvance(
+  file: File,
+  userId: string
+): Promise<{
+  url: string | null;
+  storagePath: string | null;
+  tipo: 'foto' | 'video' | null;
+  error: string | null;
+}> {
+  try {
+    // Validar archivo
+    const validacion = validarArchivoAvance(file);
+    if (!validacion.valido) {
+      return { url: null, storagePath: null, tipo: null, error: validacion.error! };
+    }
+
+    // Generar nombre único
+    const extension = file.name.split('.').pop() || (validacion.tipo === 'video' ? 'mp4' : 'jpg');
+    const timestamp = Date.now();
+    const randomId = Math.random().toString(36).substring(2, 8);
+    const storagePath = `${userId}/${timestamp}-${randomId}.${extension}`;
+
+    // Subir archivo
+    const { data, error } = await supabase.storage
+      .from(BUCKET_AVANCES)
+      .upload(storagePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+      });
+
+    if (error) {
+      console.error('Error subiendo media de avance:', error.message);
+      return { url: null, storagePath: null, tipo: null, error: error.message };
+    }
+
+    // Obtener URL pública
+    const { data: publicUrl } = supabase.storage
+      .from(BUCKET_AVANCES)
+      .getPublicUrl(data.path);
+
+    return {
+      url: publicUrl.publicUrl,
+      storagePath: data.path,
+      tipo: validacion.tipo,
+      error: null
+    };
+  } catch (err) {
+    console.error('Error inesperado:', err);
+    return { url: null, storagePath: null, tipo: null, error: 'Error al subir el archivo' };
+  }
+}
+
+/**
+ * Eliminar media de un avance
+ */
+export async function eliminarMediaAvance(storagePath: string): Promise<{ error: string | null }> {
+  try {
+    const { error } = await supabase.storage
+      .from(BUCKET_AVANCES)
+      .remove([storagePath]);
+
+    if (error) {
+      console.error('Error eliminando media de avance:', error.message);
+      return { error: error.message };
+    }
+
+    return { error: null };
+  } catch (err) {
+    return { error: 'Error al eliminar el archivo' };
   }
 }
