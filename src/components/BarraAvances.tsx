@@ -1,6 +1,6 @@
 /**
- * BarraAvances - Barra horizontal de stories/avances tipo Instagram
- * Muestra círculos con avatares de usuarios que tienen avances activos
+ * BarraAvances - Barra horizontal de stories/avances estilo WhatsApp
+ * Cuadrados con preview del contenido y avatar pequeño en la esquina
  */
 
 import { useState, useEffect, useRef, useMemo } from 'react';
@@ -22,6 +22,7 @@ interface AvanceAgrupado {
   autorAvatar: string | null;
   avances: AvanceConDetalles[];
   todosVistos: boolean;
+  ultimoAvance: AvanceConDetalles;
 }
 
 export default function BarraAvances({
@@ -57,6 +58,10 @@ export default function BarraAvances({
         if (!avance.visto_por_mi) {
           existing.todosVistos = false;
         }
+        // Mantener el más reciente como preview
+        if (new Date(avance.created_at) > new Date(existing.ultimoAvance.created_at)) {
+          existing.ultimoAvance = avance;
+        }
       } else {
         grupos.set(avance.autor_id, {
           autorId: avance.autor_id,
@@ -64,6 +69,7 @@ export default function BarraAvances({
           autorAvatar: avance.autor_avatar,
           avances: [avance],
           todosVistos: avance.visto_por_mi === true,
+          ultimoAvance: avance,
         });
       }
     }
@@ -71,10 +77,8 @@ export default function BarraAvances({
     // Ordenar: usuario actual primero, luego no vistos, luego vistos
     const resultado = Array.from(grupos.values());
     resultado.sort((a, b) => {
-      // Usuario actual siempre primero
       if (a.autorId === userId) return -1;
       if (b.autorId === userId) return 1;
-      // Luego los no vistos
       if (!a.todosVistos && b.todosVistos) return -1;
       if (a.todosVistos && !b.todosVistos) return 1;
       return 0;
@@ -88,12 +92,11 @@ export default function BarraAvances({
 
   if (loading) {
     return (
-      <div className="bg-white border-b border-surface-200 px-4 py-3">
-        <div className="flex gap-4 animate-pulse">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="flex flex-col items-center gap-1">
-              <div className="w-16 h-16 rounded-full bg-surface-200" />
-              <div className="w-12 h-3 bg-surface-200 rounded" />
+      <div className="bg-white border-b border-surface-200 px-4 py-4">
+        <div className="flex gap-3 animate-pulse">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex flex-col items-center gap-2">
+              <div className="w-20 h-28 rounded-xl bg-surface-200" />
             </div>
           ))}
         </div>
@@ -107,98 +110,178 @@ export default function BarraAvances({
   }
 
   return (
-    <div className="bg-white border-b border-surface-200">
+    <div className="bg-gradient-to-b from-white to-surface-50 border-b border-surface-200">
       <div
         ref={scrollRef}
-        className="flex gap-4 px-4 py-3 overflow-x-auto scrollbar-hide"
+        className="flex gap-3 px-4 py-4 overflow-x-auto scrollbar-hide"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {/* Botón "Tu avance" - siempre primero si está autenticado */}
         {userId && (
-          <div className="flex flex-col items-center gap-1 flex-shrink-0">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex flex-col items-center gap-1.5 flex-shrink-0"
+          >
             <button
               onClick={misAvances ? () => onVerAvances(userId, misAvances.avances) : onCrearAvance}
               className="relative group"
             >
-              {/* Anillo de gradiente si tiene avances */}
-              <div className={`w-[68px] h-[68px] rounded-full flex items-center justify-center ${
-                misAvances ? 'bg-gradient-to-tr from-primary-500 via-secondary-500 to-accent-500 p-[3px]' : 'bg-surface-200 p-[3px]'
+              {/* Contenedor con preview */}
+              <div className={`w-20 h-28 rounded-xl overflow-hidden shadow-md transition-all duration-300 group-hover:shadow-lg group-hover:scale-[1.02] ${
+                misAvances
+                  ? ''
+                  : 'bg-gradient-to-br from-primary-100 via-primary-50 to-secondary-100 border-2 border-dashed border-primary-300'
               }`}>
-                <div className="w-full h-full rounded-full bg-white p-[2px]">
-                  <div className="w-full h-full rounded-full overflow-hidden bg-surface-100 flex items-center justify-center">
-                    {userAvatar ? (
+                {misAvances ? (
+                  // Preview del último avance
+                  <>
+                    {misAvances.ultimoAvance.tipo_media === 'foto' ? (
                       <img
-                        src={userAvatar}
-                        alt="Tu avatar"
+                        src={misAvances.ultimoAvance.media_url}
+                        alt="Tu avance"
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <span className="text-2xl font-bold text-surface-400">
-                        {userName?.charAt(0).toUpperCase() || '?'}
-                      </span>
+                      <video
+                        src={misAvances.ultimoAvance.media_url}
+                        className="w-full h-full object-cover"
+                        muted
+                      />
                     )}
+                    {/* Overlay con gradiente */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+                    {/* Anillo de color indicando estado */}
+                    <div className="absolute inset-0 rounded-xl ring-[3px] ring-inset ring-primary-500" />
+                  </>
+                ) : (
+                  // Estado vacío - crear nuevo
+                  <div className="w-full h-full flex flex-col items-center justify-center">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center shadow-lg mb-1">
+                      <span className="material-symbols-outlined text-white text-xl">add</span>
+                    </div>
+                    <span className="text-[10px] font-medium text-primary-600">Crear</span>
                   </div>
-                </div>
+                )}
               </div>
 
-              {/* Botón + para agregar si no tiene avances */}
-              {!misAvances && (
-                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-primary-500 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
-                  <span className="material-symbols-outlined text-white text-sm">add</span>
+              {/* Avatar pequeño en la esquina */}
+              <div className={`absolute -bottom-1 -right-1 w-8 h-8 rounded-full border-[3px] border-white shadow-md overflow-hidden ${
+                !misAvances ? 'ring-2 ring-primary-500' : ''
+              }`}>
+                {userAvatar ? (
+                  <img
+                    src={userAvatar}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white text-xs font-bold">
+                    {userName?.charAt(0).toUpperCase() || '?'}
+                  </div>
+                )}
+              </div>
+
+              {/* Indicador de cantidad */}
+              {misAvances && misAvances.avances.length > 1 && (
+                <div className="absolute top-1 right-1 bg-black/70 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                  {misAvances.avances.length}
                 </div>
               )}
             </button>
-            <span className="text-xs text-surface-600 truncate max-w-[70px]">
-              {misAvances ? 'Tu avance' : 'Crear'}
+            <span className="text-xs font-medium text-surface-700 truncate max-w-[80px]">
+              Tu avance
             </span>
-          </div>
+          </motion.div>
         )}
 
         {/* Avances de otros usuarios */}
         {avancesAgrupados
           .filter(g => g.autorId !== userId)
-          .map((grupo) => (
+          .map((grupo, index) => (
             <motion.div
               key={grupo.autorId}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex flex-col items-center gap-1 flex-shrink-0"
+              initial={{ opacity: 0, scale: 0.9, x: 20 }}
+              animate={{ opacity: 1, scale: 1, x: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className="flex flex-col items-center gap-1.5 flex-shrink-0"
             >
               <button
                 onClick={() => onVerAvances(grupo.autorId, grupo.avances)}
                 className="relative group"
               >
-                {/* Anillo de gradiente (verde si no visto, gris si visto) */}
-                <div className={`w-[68px] h-[68px] rounded-full flex items-center justify-center p-[3px] ${
-                  grupo.todosVistos
-                    ? 'bg-surface-300'
-                    : 'bg-gradient-to-tr from-green-400 via-emerald-500 to-teal-500'
+                {/* Contenedor con preview */}
+                <div className={`w-20 h-28 rounded-xl overflow-hidden shadow-md transition-all duration-300 group-hover:shadow-lg group-hover:scale-[1.02] ${
+                  !grupo.todosVistos ? 'ring-[3px] ring-emerald-500' : 'ring-[3px] ring-surface-300'
                 }`}>
-                  <div className="w-full h-full rounded-full bg-white p-[2px]">
-                    <div className="w-full h-full rounded-full overflow-hidden bg-surface-100 flex items-center justify-center">
-                      {grupo.autorAvatar ? (
-                        <img
-                          src={grupo.autorAvatar}
-                          alt={grupo.autorNombre}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                        />
-                      ) : (
-                        <span className="text-2xl font-bold text-surface-400">
-                          {grupo.autorNombre.charAt(0).toUpperCase()}
-                        </span>
-                      )}
+                  {/* Preview del último avance */}
+                  {grupo.ultimoAvance.tipo_media === 'foto' ? (
+                    <img
+                      src={grupo.ultimoAvance.media_url}
+                      alt={grupo.autorNombre}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                  ) : (
+                    <video
+                      src={grupo.ultimoAvance.media_url}
+                      className="w-full h-full object-cover"
+                      muted
+                    />
+                  )}
+
+                  {/* Overlay con gradiente */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+
+                  {/* Texto del avance si existe */}
+                  {grupo.ultimoAvance.texto_opcional && (
+                    <div className="absolute bottom-7 left-1 right-1">
+                      <p className="text-[9px] text-white/90 line-clamp-2 leading-tight px-1">
+                        {grupo.ultimoAvance.texto_opcional}
+                      </p>
                     </div>
-                  </div>
+                  )}
+
+                  {/* Indicador de proyecto enlazado */}
+                  {grupo.ultimoAvance.proyecto_id && (
+                    <div className="absolute top-1 left-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white p-1 rounded-md shadow-sm">
+                      <span className="material-symbols-outlined text-xs">folder</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Avatar pequeño en la esquina con borde de color */}
+                <div className={`absolute -bottom-1 -right-1 w-8 h-8 rounded-full border-[3px] border-white shadow-md overflow-hidden ${
+                  !grupo.todosVistos ? 'ring-2 ring-emerald-500' : ''
+                }`}>
+                  {grupo.autorAvatar ? (
+                    <img
+                      src={grupo.autorAvatar}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white text-xs font-bold">
+                      {grupo.autorNombre.charAt(0).toUpperCase()}
+                    </div>
+                  )}
                 </div>
 
                 {/* Indicador de cantidad de avances */}
                 {grupo.avances.length > 1 && (
-                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary-500 rounded-full flex items-center justify-center border-2 border-white text-[10px] font-bold text-white">
+                  <div className="absolute top-1 right-1 bg-black/70 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full backdrop-blur-sm">
                     {grupo.avances.length}
                   </div>
                 )}
+
+                {/* Badge de nuevo si no está visto */}
+                {!grupo.todosVistos && (
+                  <div className="absolute -top-1 -left-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white animate-pulse" />
+                )}
               </button>
-              <span className="text-xs text-surface-600 truncate max-w-[70px]">
+              <span className={`text-xs truncate max-w-[80px] ${
+                !grupo.todosVistos ? 'font-semibold text-surface-900' : 'font-medium text-surface-600'
+              }`}>
                 {grupo.autorNombre.split(' ')[0]}
               </span>
             </motion.div>
@@ -206,12 +289,23 @@ export default function BarraAvances({
 
         {/* Mensaje si no hay avances */}
         {avancesAgrupados.length === 0 && userId && (
-          <div className="flex items-center gap-3 px-4 py-2 bg-surface-50 rounded-xl ml-2">
-            <span className="material-symbols-outlined text-surface-400">photo_camera</span>
-            <p className="text-sm text-surface-500">
-              Sé el primero en compartir un avance
-            </p>
-          </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex items-center gap-4 px-4 py-3 bg-gradient-to-r from-primary-50 to-secondary-50 rounded-xl ml-2 border border-primary-100"
+          >
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center shadow-lg">
+              <span className="material-symbols-outlined text-white text-2xl">photo_camera</span>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-surface-800">
+                Comparte tu primer avance
+              </p>
+              <p className="text-xs text-surface-500">
+                Muestra el progreso de tus proyectos
+              </p>
+            </div>
+          </motion.div>
         )}
       </div>
     </div>

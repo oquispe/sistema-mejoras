@@ -294,27 +294,51 @@ export default function VisorAvance({
 
           {/* Texto del avance */}
           {avanceActual.texto_opcional && (
-            <div className="absolute bottom-24 left-0 right-0 z-20 px-4">
-              <div className="bg-black/50 backdrop-blur-sm rounded-xl px-4 py-3">
-                <p className="text-white text-center">
+            <div className={`absolute left-0 right-0 z-20 px-4 ${
+              avanceActual.proyecto_id ? 'bottom-32' : 'bottom-12'
+            }`}>
+              <div className="bg-black/60 backdrop-blur-md rounded-2xl px-5 py-4 border border-white/10">
+                <p className="text-white text-center text-base font-medium leading-relaxed">
                   {avanceActual.texto_opcional}
                 </p>
               </div>
             </div>
           )}
 
-          {/* Botón ver proyecto */}
+          {/* Botón ver proyecto - Diseño llamativo */}
           {avanceActual.proyecto_id && avanceActual.proyecto_titulo && (
-            <div className="absolute bottom-8 left-0 right-0 z-20 px-4">
+            <div className="absolute bottom-6 left-4 right-4 z-20">
               <button
                 onClick={() => {
                   onVerProyecto?.(avanceActual.proyecto_id!);
                   onClose();
                 }}
-                className="w-full bg-white text-surface-900 font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-surface-100 transition-colors"
+                className="w-full group relative overflow-hidden"
               >
-                <span className="material-symbols-outlined text-lg">folder</span>
-                Ver: {avanceActual.proyecto_titulo}
+                {/* Fondo con gradiente animado */}
+                <div className="absolute inset-0 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 rounded-2xl" />
+                <div className="absolute inset-0 bg-gradient-to-r from-rose-500 via-orange-500 to-amber-500 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                {/* Efecto de brillo */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
+
+                {/* Contenido */}
+                <div className="relative flex items-center justify-center gap-3 py-4 px-6">
+                  <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                    <span className="material-symbols-outlined text-white text-xl">folder_open</span>
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-white/80 text-xs font-medium uppercase tracking-wide">
+                      Ver proyecto
+                    </p>
+                    <p className="text-white font-bold text-base truncate">
+                      {avanceActual.proyecto_titulo}
+                    </p>
+                  </div>
+                  <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/30 transition-colors">
+                    <span className="material-symbols-outlined text-white text-lg">arrow_forward</span>
+                  </div>
+                </div>
               </button>
             </div>
           )}
