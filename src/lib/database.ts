@@ -1350,18 +1350,28 @@ export async function contarEvaluacionesPendientes(
     .select('*', { count: 'exact', head: true })
     .eq('concurso_id', concursoId);
 
-  // Evaluaciones del jurado
-  const { count: evaluadas } = await supabase
-    .from('evaluaciones')
-    .select('*', { count: 'exact', head: true })
-    .eq('jurado_id', juradoId)
-    .in('postulacion_id',
-      supabase.from('postulaciones').select('id').eq('concurso_id', concursoId)
-    );
+  // Primero obtener los IDs de postulaciones del concurso
+  const { data: postulacionesData } = await supabase
+    .from('postulaciones')
+    .select('id')
+    .eq('concurso_id', concursoId);
+
+  const postulacionIds = (postulacionesData || []).map(p => p.id);
+
+  // Evaluaciones del jurado para esas postulaciones
+  let evaluadas = 0;
+  if (postulacionIds.length > 0) {
+    const { count } = await supabase
+      .from('evaluaciones')
+      .select('*', { count: 'exact', head: true })
+      .eq('jurado_id', juradoId)
+      .in('postulacion_id', postulacionIds);
+    evaluadas = count || 0;
+  }
 
   return {
     total: total || 0,
-    evaluadas: evaluadas || 0,
-    pendientes: (total || 0) - (evaluadas || 0),
+    evaluadas,
+    pendientes: (total || 0) - evaluadas,
   };
 }

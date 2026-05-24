@@ -50,12 +50,6 @@ export default function LoginPage() {
     setLoading(false);
   }
 
-  function toggleMode() {
-    setIsLogin(!isLogin);
-    setError(null);
-    setEmailSent(false);
-  }
-
   // Pantalla de "revisa tu correo"
   if (emailSent) {
     return (
