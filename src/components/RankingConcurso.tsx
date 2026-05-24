@@ -1,5 +1,6 @@
 /**
  * RankingConcurso - Muestra el ranking de proyectos de un concurso finalizado
+ * Con podio visual y tabla completa de todos los proyectos
  */
 
 import { useState, useEffect, useMemo } from 'react';
@@ -69,7 +70,8 @@ export default function RankingConcurso({ concurso, onVerProyecto }: RankingConc
           border: 'border-yellow-400',
           shadow: 'shadow-yellow-200',
           icon: 'emoji_events',
-          label: 'Primer Lugar',
+          label: '1er Lugar',
+          ringColor: 'ring-yellow-400',
         };
       case 2:
         return {
@@ -78,7 +80,8 @@ export default function RankingConcurso({ concurso, onVerProyecto }: RankingConc
           border: 'border-gray-300',
           shadow: 'shadow-gray-200',
           icon: 'workspace_premium',
-          label: 'Segundo Lugar',
+          label: '2do Lugar',
+          ringColor: 'ring-gray-300',
         };
       case 3:
         return {
@@ -87,7 +90,8 @@ export default function RankingConcurso({ concurso, onVerProyecto }: RankingConc
           border: 'border-orange-400',
           shadow: 'shadow-orange-200',
           icon: 'military_tech',
-          label: 'Tercer Lugar',
+          label: '3er Lugar',
+          ringColor: 'ring-orange-400',
         };
       default:
         return {
@@ -97,6 +101,7 @@ export default function RankingConcurso({ concurso, onVerProyecto }: RankingConc
           shadow: '',
           icon: '',
           label: '',
+          ringColor: '',
         };
     }
   };
@@ -130,9 +135,6 @@ export default function RankingConcurso({ concurso, onVerProyecto }: RankingConc
 
   // Podio (top 3) del ranking filtrado
   const podio = rankingFiltrado.slice(0, 3);
-  const resto = rankingFiltrado.slice(3);
-
-  // Verificar si hay filtros activos
   const hayFiltrosActivos = filtroArea !== 'todas' || filtroCategoria !== 'todas';
 
   return (
@@ -226,148 +228,259 @@ export default function RankingConcurso({ concurso, onVerProyecto }: RankingConc
         )}
       </div>
 
-      {/* Podio */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 md:pt-8">
-        {/* Reordenar para mostrar: 2do, 1ro, 3ro en desktop */}
-        {[podio[1], podio[0], podio[2]].filter(Boolean).map((proyecto, visualIndex) => {
-          if (!proyecto) return null;
-          const posicion = proyecto.posicion || visualIndex + 1;
-          const config = getMedalConfig(posicion);
-          const esGanador = posicion === 1;
+      {/* Podio - Diseño diferente para móvil y desktop */}
+      {podio.length > 0 && (
+        <div className="space-y-4">
+          {/* MÓVIL: Lista vertical en orden 1°, 2°, 3° */}
+          <div className="md:hidden space-y-4">
+            {podio.map((proyecto) => {
+              const config = getMedalConfig(proyecto.posicion || 1);
+              return (
+                <motion.div
+                  key={proyecto.proyecto_id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: (proyecto.posicion || 1) * 0.1 }}
+                  onClick={() => onVerProyecto?.(proyecto.proyecto_id)}
+                  className={`bg-white rounded-xl border-2 ${config.border} shadow-md p-4 cursor-pointer hover:shadow-lg transition-all flex items-center gap-4`}
+                >
+                  {/* Medalla */}
+                  <div className={`w-14 h-14 ${config.bg} rounded-full flex items-center justify-center shadow-md flex-shrink-0`}>
+                    <span className="material-symbols-outlined text-white text-2xl">
+                      {config.icon}
+                    </span>
+                  </div>
 
-          // Orden visual en desktop: 2do, 1ro, 3ro
-          const orderClass = esGanador ? 'md:order-2' : (posicion === 2 ? 'md:order-1' : 'md:order-3');
-
-          return (
-            <motion.div
-              key={proyecto.proyecto_id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: posicion * 0.1 }}
-              onClick={() => onVerProyecto?.(proyecto.proyecto_id)}
-              className={`relative bg-white rounded-2xl border-2 ${config.border} shadow-lg p-6 cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all ${orderClass} ${
-                esGanador ? 'md:-mt-6 md:scale-105 z-10' : ''
-              }`}
-            >
-              {/* Medalla */}
-              <div className={`w-16 h-16 ${config.bg} rounded-full flex items-center justify-center mx-auto -mt-12 mb-4 shadow-lg`}>
-                {posicion <= 3 ? (
-                  <span className="material-symbols-outlined text-white text-3xl">
-                    {config.icon}
-                  </span>
-                ) : (
-                  <span className="text-white text-2xl font-bold">{posicion}</span>
-                )}
-              </div>
-
-              {/* Posición */}
-              <p className={`text-center text-sm font-semibold ${config.text} mb-3`}>
-                {config.label || `${posicion}° Lugar`}
-              </p>
-
-              {/* Proyecto */}
-              <h3 className="text-lg font-bold text-surface-900 text-center mb-2 line-clamp-2">
-                {proyecto.proyecto_titulo}
-              </h3>
-
-              {/* Autor */}
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-full overflow-hidden bg-surface-100">
-                  {proyecto.autor_avatar ? (
-                    <img src={proyecto.autor_avatar} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-primary text-white text-sm font-bold">
-                      {proyecto.autor_nombre?.charAt(0).toUpperCase()}
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`text-sm font-bold ${config.text}`}>{config.label}</span>
                     </div>
-                  )}
-                </div>
-                <div className="text-sm">
-                  <p className="font-medium text-surface-800">{proyecto.autor_nombre}</p>
-                  <p className="text-xs text-surface-500">{proyecto.autor_area}</p>
-                </div>
-              </div>
+                    <h3 className="font-bold text-surface-900 truncate">{proyecto.proyecto_titulo}</h3>
+                    <p className="text-sm text-surface-500">{proyecto.autor_nombre} • {proyecto.autor_area}</p>
+                  </div>
 
-              {/* Puntaje */}
-              <div className="text-center">
-                <p className="text-3xl font-bold text-primary-600">
-                  {proyecto.puntaje_promedio.toFixed(1)}
-                </p>
-                <p className="text-xs text-surface-500">
-                  de 10 puntos • {proyecto.total_evaluaciones} evaluaciones
-                </p>
-              </div>
+                  {/* Puntaje */}
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-2xl font-bold text-primary-600">{proyecto.puntaje_promedio.toFixed(1)}</p>
+                    <p className="text-xs text-surface-400">{proyecto.total_evaluaciones} eval.</p>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
 
-              {/* Desglose */}
-              <div className="mt-4 pt-4 border-t border-surface-100 grid grid-cols-2 gap-2 text-xs">
-                <div className="text-center">
-                  <p className="text-surface-400">Innovación</p>
-                  <p className="font-semibold text-surface-700">{proyecto.promedio_innovacion.toFixed(1)}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-surface-400">Impacto</p>
-                  <p className="font-semibold text-surface-700">{proyecto.promedio_impacto.toFixed(1)}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-surface-400">Factibilidad</p>
-                  <p className="font-semibold text-surface-700">{proyecto.promedio_factibilidad.toFixed(1)}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-surface-400">Presentación</p>
-                  <p className="font-semibold text-surface-700">{proyecto.promedio_presentacion.toFixed(1)}</p>
-                </div>
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
+          {/* DESKTOP: Podio clásico 2°, 1°, 3° */}
+          <div className="hidden md:grid md:grid-cols-3 gap-6 pt-8">
+            {[podio[1], podio[0], podio[2]].filter(Boolean).map((proyecto) => {
+              if (!proyecto) return null;
+              const posicion = proyecto.posicion || 1;
+              const config = getMedalConfig(posicion);
+              const esGanador = posicion === 1;
 
-      {/* Resto del ranking */}
-      {resto.length > 0 && (
+              return (
+                <motion.div
+                  key={proyecto.proyecto_id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: posicion * 0.1 }}
+                  onClick={() => onVerProyecto?.(proyecto.proyecto_id)}
+                  className={`relative bg-white rounded-2xl border-2 ${config.border} shadow-lg p-6 cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all ${
+                    esGanador ? '-mt-6 scale-105 z-10' : ''
+                  }`}
+                  style={{ order: posicion === 1 ? 2 : posicion === 2 ? 1 : 3 }}
+                >
+                  {/* Medalla */}
+                  <div className={`w-16 h-16 ${config.bg} rounded-full flex items-center justify-center mx-auto -mt-12 mb-4 shadow-lg`}>
+                    <span className="material-symbols-outlined text-white text-3xl">
+                      {config.icon}
+                    </span>
+                  </div>
+
+                  {/* Posición */}
+                  <p className={`text-center text-sm font-semibold ${config.text} mb-3`}>
+                    {config.label}
+                  </p>
+
+                  {/* Proyecto */}
+                  <h3 className="text-lg font-bold text-surface-900 text-center mb-2 line-clamp-2">
+                    {proyecto.proyecto_titulo}
+                  </h3>
+
+                  {/* Autor */}
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    <div className="w-8 h-8 rounded-full overflow-hidden bg-surface-100">
+                      {proyecto.autor_avatar ? (
+                        <img src={proyecto.autor_avatar} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-primary text-white text-sm font-bold">
+                          {proyecto.autor_nombre?.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-sm">
+                      <p className="font-medium text-surface-800">{proyecto.autor_nombre}</p>
+                      <p className="text-xs text-surface-500">{proyecto.autor_area}</p>
+                    </div>
+                  </div>
+
+                  {/* Puntaje */}
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-primary-600">
+                      {proyecto.puntaje_promedio.toFixed(1)}
+                    </p>
+                    <p className="text-xs text-surface-500">
+                      de 10 puntos • {proyecto.total_evaluaciones} evaluaciones
+                    </p>
+                  </div>
+
+                  {/* Desglose */}
+                  <div className="mt-4 pt-4 border-t border-surface-100 grid grid-cols-2 gap-2 text-xs">
+                    <div className="text-center">
+                      <p className="text-surface-400">Innovación</p>
+                      <p className="font-semibold text-surface-700">{proyecto.promedio_innovacion.toFixed(1)}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-surface-400">Impacto</p>
+                      <p className="font-semibold text-surface-700">{proyecto.promedio_impacto.toFixed(1)}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-surface-400">Factibilidad</p>
+                      <p className="font-semibold text-surface-700">{proyecto.promedio_factibilidad.toFixed(1)}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-surface-400">Presentación</p>
+                      <p className="font-semibold text-surface-700">{proyecto.promedio_presentacion.toFixed(1)}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Tabla completa de TODOS los proyectos */}
+      {rankingFiltrado.length > 0 && (
         <div>
           <h3 className="text-lg font-display font-bold text-surface-900 mb-4 flex items-center gap-2">
             <span className="material-symbols-outlined text-surface-400">format_list_numbered</span>
-            Otros participantes
+            Ranking completo ({rankingFiltrado.length} proyectos)
           </h3>
 
           <div className="bg-white rounded-xl border border-surface-200 shadow-soft overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-surface-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-surface-500 uppercase tracking-wider">Pos</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-surface-500 uppercase tracking-wider">Proyecto</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-surface-500 uppercase tracking-wider hidden sm:table-cell">Autor</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-surface-500 uppercase tracking-wider">Puntaje</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-surface-100">
-                {resto.map((proyecto) => (
-                  <tr
+            {/* Vista tabla para desktop */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-surface-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-surface-500 uppercase tracking-wider w-16">Pos</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-surface-500 uppercase tracking-wider">Proyecto</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-surface-500 uppercase tracking-wider">Autor</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-surface-500 uppercase tracking-wider">Área</th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-surface-500 uppercase tracking-wider">Eval.</th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-surface-500 uppercase tracking-wider">Puntaje</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-surface-100">
+                  {rankingFiltrado.map((proyecto) => {
+                    const config = getMedalConfig(proyecto.posicion || 99);
+                    const esPodio = (proyecto.posicion || 99) <= 3;
+
+                    return (
+                      <tr
+                        key={proyecto.proyecto_id}
+                        onClick={() => onVerProyecto?.(proyecto.proyecto_id)}
+                        className={`hover:bg-surface-50 cursor-pointer transition-colors ${esPodio ? 'bg-amber-50/30' : ''}`}
+                      >
+                        <td className="px-4 py-4">
+                          {esPodio ? (
+                            <div className={`w-8 h-8 ${config.bg} rounded-full flex items-center justify-center shadow-sm`}>
+                              <span className="material-symbols-outlined text-white text-sm">{config.icon}</span>
+                            </div>
+                          ) : (
+                            <span className="w-8 h-8 bg-surface-100 rounded-full flex items-center justify-center text-sm font-semibold text-surface-600">
+                              {proyecto.posicion}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-4">
+                          <p className="font-medium text-surface-900">{proyecto.proyecto_titulo}</p>
+                          <p className="text-xs text-surface-500 capitalize">{proyecto.proyecto_categoria}</p>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-full overflow-hidden bg-surface-100 flex-shrink-0">
+                              {proyecto.autor_avatar ? (
+                                <img src={proyecto.autor_avatar} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-gradient-primary text-white text-xs font-bold">
+                                  {proyecto.autor_nombre?.charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                            </div>
+                            <span className="text-sm text-surface-700">{proyecto.autor_nombre}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 text-sm text-surface-600">{proyecto.autor_area}</td>
+                        <td className="px-4 py-4 text-center text-sm text-surface-600">{proyecto.total_evaluaciones}</td>
+                        <td className="px-4 py-4 text-center">
+                          <span className={`text-lg font-bold ${esPodio ? 'text-primary-600' : 'text-surface-700'}`}>
+                            {proyecto.puntaje_promedio.toFixed(1)}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Vista cards para móvil */}
+            <div className="sm:hidden divide-y divide-surface-100">
+              {rankingFiltrado.map((proyecto) => {
+                const config = getMedalConfig(proyecto.posicion || 99);
+                const esPodio = (proyecto.posicion || 99) <= 3;
+
+                return (
+                  <div
                     key={proyecto.proyecto_id}
                     onClick={() => onVerProyecto?.(proyecto.proyecto_id)}
-                    className="hover:bg-surface-50 cursor-pointer transition-colors"
+                    className={`p-4 cursor-pointer hover:bg-surface-50 transition-colors ${esPodio ? 'bg-amber-50/30' : ''}`}
                   >
-                    <td className="px-4 py-4">
-                      <span className="w-8 h-8 bg-surface-100 rounded-full flex items-center justify-center text-sm font-semibold text-surface-600">
-                        {proyecto.posicion}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <p className="font-medium text-surface-900">{proyecto.proyecto_titulo}</p>
-                      <p className="text-xs text-surface-500 sm:hidden">{proyecto.autor_nombre}</p>
-                    </td>
-                    <td className="px-4 py-4 hidden sm:table-cell">
-                      <p className="text-sm text-surface-700">{proyecto.autor_nombre}</p>
-                      <p className="text-xs text-surface-500">{proyecto.autor_area}</p>
-                    </td>
-                    <td className="px-4 py-4 text-center">
-                      <span className="text-lg font-bold text-primary-600">
-                        {proyecto.puntaje_promedio.toFixed(1)}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    <div className="flex items-center gap-3">
+                      {/* Posición */}
+                      {esPodio ? (
+                        <div className={`w-10 h-10 ${config.bg} rounded-full flex items-center justify-center shadow-sm flex-shrink-0`}>
+                          <span className="material-symbols-outlined text-white text-lg">{config.icon}</span>
+                        </div>
+                      ) : (
+                        <span className="w-10 h-10 bg-surface-100 rounded-full flex items-center justify-center text-sm font-bold text-surface-600 flex-shrink-0">
+                          {proyecto.posicion}°
+                        </span>
+                      )}
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-surface-900 truncate">{proyecto.proyecto_titulo}</p>
+                        <p className="text-sm text-surface-500">{proyecto.autor_nombre}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs px-2 py-0.5 bg-surface-100 rounded-full text-surface-600">{proyecto.autor_area}</span>
+                          <span className="text-xs text-surface-400">{proyecto.total_evaluaciones} eval.</span>
+                        </div>
+                      </div>
+
+                      {/* Puntaje */}
+                      <div className="text-right flex-shrink-0">
+                        <p className={`text-xl font-bold ${esPodio ? 'text-primary-600' : 'text-surface-700'}`}>
+                          {proyecto.puntaje_promedio.toFixed(1)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}

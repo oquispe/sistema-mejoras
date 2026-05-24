@@ -135,9 +135,34 @@ export default function ConcursosView({ onVerProyecto }: ConcursosViewProps) {
             <p className="text-surface-600 mb-4">{concursoSeleccionado.descripcion}</p>
           )}
 
-          {/* Timeline de fases */}
+          {/* Timeline de fases - Diseño mejorado */}
           <div className="bg-surface-50 rounded-xl p-4 mb-4">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-sm">
+            {/* Móvil: Steps verticales */}
+            <div className="sm:hidden space-y-3">
+              {[
+                { id: 'postulacion', label: 'Postulación', icon: 'how_to_reg', active: fase === 'postulacion', fechas: `${formatearFecha(concursoSeleccionado.fecha_inicio_postulacion)} - ${formatearFecha(concursoSeleccionado.fecha_fin_postulacion)}` },
+                { id: 'evaluacion', label: 'Evaluación', icon: 'rate_review', active: fase === 'evaluacion' || fase === 'en_proceso', fechas: `Hasta ${formatearFecha(concursoSeleccionado.fecha_fin_evaluacion)}` },
+                { id: 'finalizado', label: 'Resultados', icon: 'emoji_events', active: fase === 'finalizado', fechas: '' },
+              ].map((step) => (
+                <div key={step.id} className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    step.active ? 'bg-primary-500 text-white shadow-md' : 'bg-surface-200 text-surface-500'
+                  }`}>
+                    <span className="material-symbols-outlined text-lg">{step.icon}</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className={`font-medium ${step.active ? 'text-primary-600' : 'text-surface-600'}`}>{step.label}</p>
+                    {step.fechas && <p className="text-xs text-surface-500">{step.fechas}</p>}
+                  </div>
+                  {step.active && (
+                    <span className="material-symbols-outlined text-primary-500 text-sm">check_circle</span>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop: Steps horizontales */}
+            <div className="hidden sm:flex sm:items-center gap-4 text-sm">
               <div className={`flex items-center gap-2 ${fase === 'postulacion' ? 'text-green-600 font-semibold' : 'text-surface-500'}`}>
                 <span className="material-symbols-outlined text-lg">how_to_reg</span>
                 <div>
@@ -146,7 +171,7 @@ export default function ConcursosView({ onVerProyecto }: ConcursosViewProps) {
                 </div>
               </div>
 
-              <span className="hidden sm:block material-symbols-outlined text-surface-300">arrow_forward</span>
+              <span className="material-symbols-outlined text-surface-300">arrow_forward</span>
 
               <div className={`flex items-center gap-2 ${fase === 'evaluacion' || fase === 'en_proceso' ? 'text-amber-600 font-semibold' : 'text-surface-500'}`}>
                 <span className="material-symbols-outlined text-lg">rate_review</span>
@@ -156,7 +181,7 @@ export default function ConcursosView({ onVerProyecto }: ConcursosViewProps) {
                 </div>
               </div>
 
-              <span className="hidden sm:block material-symbols-outlined text-surface-300">arrow_forward</span>
+              <span className="material-symbols-outlined text-surface-300">arrow_forward</span>
 
               <div className={`flex items-center gap-2 ${fase === 'finalizado' ? 'text-primary-600 font-semibold' : 'text-surface-500'}`}>
                 <span className="material-symbols-outlined text-lg">emoji_events</span>
@@ -223,7 +248,7 @@ export default function ConcursosView({ onVerProyecto }: ConcursosViewProps) {
             </p>
           </div>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-3">
             {postulaciones.map((post, index) => (
               <motion.div
                 key={post.id}
@@ -233,7 +258,47 @@ export default function ConcursosView({ onVerProyecto }: ConcursosViewProps) {
                 className="bg-white rounded-xl border border-surface-200 shadow-soft p-4 hover:shadow-soft-lg hover:border-surface-300 transition-all cursor-pointer"
                 onClick={() => onVerProyecto?.(post.proyecto_id)}
               >
-                <div className="flex items-center gap-4">
+                {/* Móvil: diseño vertical */}
+                <div className="sm:hidden">
+                  <div className="flex items-start gap-3">
+                    {/* Número de orden */}
+                    <div className="w-9 h-9 rounded-lg bg-gradient-primary flex items-center justify-center text-white font-bold flex-shrink-0">
+                      {index + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-surface-900 line-clamp-2 mb-1">
+                        {post.proyecto_titulo}
+                      </h3>
+                      <div className="flex items-center gap-2 text-sm text-surface-500">
+                        <div className="w-5 h-5 rounded-full overflow-hidden bg-secondary-100 flex items-center justify-center flex-shrink-0">
+                          {post.proyecto_autor_avatar ? (
+                            <img src={post.proyecto_autor_avatar} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-[10px] font-bold text-secondary-600">
+                              {post.proyecto_autor_nombre?.charAt(0).toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+                        <span className="truncate">{post.proyecto_autor_nombre}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-surface-100">
+                    <div className="flex gap-2">
+                      <span className={`tag text-xs ${
+                        post.proyecto_categoria === 'proyecto' ? 'tag-proyecto' :
+                        post.proyecto_categoria === 'mejora' ? 'tag-mejora' : 'tag-innovacion'
+                      }`}>
+                        {post.proyecto_categoria}
+                      </span>
+                      <span className="tag tag-area text-xs">{post.proyecto_area}</span>
+                    </div>
+                    <span className="material-symbols-outlined text-surface-400">chevron_right</span>
+                  </div>
+                </div>
+
+                {/* Desktop: diseño horizontal */}
+                <div className="hidden sm:flex items-center gap-4">
                   {/* Número de orden */}
                   <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
                     {index + 1}
@@ -245,24 +310,17 @@ export default function ConcursosView({ onVerProyecto }: ConcursosViewProps) {
                       {post.proyecto_titulo}
                     </h3>
                     <div className="flex items-center gap-3 mt-1">
-                      {/* Avatar del autor */}
                       <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded-full overflow-hidden bg-secondary-100 flex items-center justify-center">
                           {post.proyecto_autor_avatar ? (
-                            <img
-                              src={post.proyecto_autor_avatar}
-                              alt=""
-                              className="w-full h-full object-cover"
-                            />
+                            <img src={post.proyecto_autor_avatar} alt="" className="w-full h-full object-cover" />
                           ) : (
                             <span className="text-xs font-bold text-secondary-600">
                               {post.proyecto_autor_nombre?.charAt(0).toUpperCase()}
                             </span>
                           )}
                         </div>
-                        <span className="text-sm text-surface-600">
-                          {post.proyecto_autor_nombre}
-                        </span>
+                        <span className="text-sm text-surface-600">{post.proyecto_autor_nombre}</span>
                       </div>
                       <span className="text-surface-300">•</span>
                       <span className="text-sm text-surface-500">{post.proyecto_area}</span>
@@ -277,9 +335,7 @@ export default function ConcursosView({ onVerProyecto }: ConcursosViewProps) {
                     }`}>
                       {post.proyecto_categoria}
                     </span>
-                    <span className="material-symbols-outlined text-surface-400">
-                      chevron_right
-                    </span>
+                    <span className="material-symbols-outlined text-surface-400">chevron_right</span>
                   </div>
                 </div>
               </motion.div>
@@ -367,18 +423,28 @@ export default function ConcursosView({ onVerProyecto }: ConcursosViewProps) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
                   onClick={() => handleSeleccionarConcurso(concurso)}
-                  className="bg-white rounded-2xl border border-surface-200 shadow-soft p-5 hover:shadow-soft-lg hover:border-primary-200 transition-all cursor-pointer group"
+                  className="bg-white rounded-2xl border border-surface-200 shadow-soft p-4 sm:p-5 hover:shadow-soft-lg hover:border-primary-200 transition-all cursor-pointer group"
                 >
+                  {/* Badge de estado */}
+                  <div className="flex items-center justify-between mb-3">
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold ${config.color}`}>
+                      <span className="material-symbols-outlined text-sm">{config.icon}</span>
+                      {config.label}
+                    </span>
+                    {/* Stats para móvil - arriba a la derecha */}
+                    <div className="sm:hidden flex items-center gap-2">
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-primary-600">{concurso.total_postulaciones}</p>
+                        <p className="text-[10px] text-surface-500">proyectos</p>
+                      </div>
+                      <span className="material-symbols-outlined text-surface-300">chevron_right</span>
+                    </div>
+                  </div>
+
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
-                      {/* Estado */}
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold ${config.color} mb-3`}>
-                        <span className="material-symbols-outlined text-sm">{config.icon}</span>
-                        {config.label}
-                      </span>
-
                       {/* Nombre */}
-                      <h3 className="text-lg font-bold text-surface-900 group-hover:text-primary-600 transition-colors mb-1">
+                      <h3 className="text-base sm:text-lg font-bold text-surface-900 group-hover:text-primary-600 transition-colors mb-1">
                         {concurso.nombre}
                       </h3>
 
@@ -390,7 +456,7 @@ export default function ConcursosView({ onVerProyecto }: ConcursosViewProps) {
                       )}
 
                       {/* Info de fechas según fase */}
-                      <div className="flex flex-wrap gap-4 text-xs text-surface-500">
+                      <div className="flex flex-wrap gap-2 sm:gap-4 text-xs text-surface-500">
                         {fase === 'postulacion' && (
                           <span className="flex items-center gap-1 text-green-600 font-medium">
                             <span className="material-symbols-outlined text-sm">schedule</span>
@@ -400,26 +466,27 @@ export default function ConcursosView({ onVerProyecto }: ConcursosViewProps) {
                         {fase === 'proximamente' && (
                           <span className="flex items-center gap-1">
                             <span className="material-symbols-outlined text-sm">event</span>
-                            Inicia el {formatearFecha(concurso.fecha_inicio_postulacion)}
+                            Inicia {formatearFecha(concurso.fecha_inicio_postulacion)}
                           </span>
                         )}
                         {(fase === 'en_proceso' || fase === 'evaluacion') && (
                           <span className="flex items-center gap-1 text-amber-600">
                             <span className="material-symbols-outlined text-sm">rate_review</span>
-                            Evaluación hasta {formatearFecha(concurso.fecha_fin_evaluacion)}
+                            <span className="hidden sm:inline">Evaluación hasta</span>
+                            <span className="sm:hidden">Hasta</span> {formatearFecha(concurso.fecha_fin_evaluacion)}
                           </span>
                         )}
                         {fase === 'finalizado' && (
-                          <span className="flex items-center gap-1">
+                          <span className="flex items-center gap-1 text-primary-600">
                             <span className="material-symbols-outlined text-sm">emoji_events</span>
-                            Resultados disponibles
+                            Ver resultados
                           </span>
                         )}
                       </div>
                     </div>
 
-                    {/* Stats y flecha */}
-                    <div className="flex items-center gap-4">
+                    {/* Stats y flecha - solo desktop */}
+                    <div className="hidden sm:flex items-center gap-4">
                       <div className="text-center">
                         <p className="text-2xl font-bold text-primary-600">
                           {concurso.total_postulaciones}

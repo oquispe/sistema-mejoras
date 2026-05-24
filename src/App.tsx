@@ -411,20 +411,21 @@ export default function App() {
         onVerProyecto={handleSelectProject}
       />
 
-      {/* Barra de Avances (Stories) - Solo en feed */}
-      {currentTab === "feed" && (
-        <BarraAvances
-          key={avancesKey}
-          userId={user.id}
-          userAvatar={profile?.avatar_url}
-          userName={profile?.nombre_completo}
-          onCrearAvance={handleCrearAvance}
-          onVerAvances={handleVerAvances}
-        />
-      )}
-
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 md:px-10 py-6 md:py-8 flex-grow w-full">
+        {/* Barra de Avances (Stories) - Solo en feed, dentro del contenedor centrado */}
+        {currentTab === "feed" && (
+          <div className="mb-6 -mx-4 md:-mx-10 lg:mx-0 lg:rounded-2xl lg:overflow-hidden lg:border lg:border-surface-200 lg:shadow-soft">
+            <BarraAvances
+              key={avancesKey}
+              userId={user.id}
+              userAvatar={profile?.avatar_url}
+              userName={profile?.nombre_completo}
+              onCrearAvance={handleCrearAvance}
+              onVerAvances={handleVerAvances}
+            />
+          </div>
+        )}
         <AnimatePresence mode="wait">
           {/* ============================================================ */}
           {/* FEED VIEW */}
