@@ -1381,6 +1381,259 @@ export async function contarEvaluacionesPendientes(
 }
 
 // ============================================================
+// GESTIÓN DE JURADOS (Admin)
+// ============================================================
+
+/**
+ * Obtener todos los usuarios con rol jurado
+ */
+export async function getUsuariosJurado(): Promise<Profile[]> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('rol', 'jurado')
+    .order('nombre_completo');
+
+  if (error) {
+    console.error('Error obteniendo jurados:', error.message);
+    return [];
+  }
+
+  return data || [];
+}
+
+/**
+ * Obtener todos los usuarios (para asignar como jurado)
+ */
+export async function getTodosUsuarios(): Promise<Profile[]> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .order('nombre_completo');
+
+  if (error) {
+    console.error('Error obteniendo usuarios:', error.message);
+    return [];
+  }
+
+  return data || [];
+}
+
+/**
+ * Cambiar rol de un usuario
+ */
+export async function cambiarRolUsuario(
+  userId: string,
+  nuevoRol: 'usuario' | 'jurado' | 'admin'
+): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from('profiles')
+    .update({ rol: nuevoRol })
+    .eq('id', userId);
+
+  if (error) {
+    console.error('Error cambiando rol:', error.message);
+    return { error: error.message };
+  }
+
+  return { error: null };
+}
+
+/**
+ * Asignar jurado a un concurso
+ */
+export async function asignarJuradoAConcurso(
+  concursoId: string,
+  juradoId: string,
+  asignadoPor: string
+): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from('concurso_jurados')
+    .insert({
+      concurso_id: concursoId,
+      jurado_id: juradoId,
+      asignado_por: asignadoPor,
+    });
+
+  if (error) {
+    if (error.code === '23505') {
+      return { error: 'Este jurado ya está asignado a este concurso' };
+    }
+    console.error('Error asignando jurado:', error.message);
+    return { error: error.message };
+  }
+
+  return { error: null };
+}
+
+/**
+ * Remover jurado de un concurso
+ */
+export async function removerJuradoDeConcurso(
+  concursoId: string,
+  juradoId: string
+): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from('concurso_jurados')
+    .delete()
+    .eq('concurso_id', concursoId)
+    .eq('jurado_id', juradoId);
+
+  if (error) {
+    console.error('Error removiendo jurado:', error.message);
+    return { error: error.message };
+  }
+
+  return { error: null };
+}
+
+/**
+ * Obtener jurados asignados a un concurso
+ */
+export async function getJuradosDeConcurso(concursoId: string): Promise<(Profile & { asignado_at: string })[]> {
+  const { data, error } = await supabase
+    .from('concurso_jurados')
+    .select(`
+      created_at,
+      jurado:profiles!jurado_id (*)
+    `)
+    .eq('concurso_id', concursoId);
+
+  if (error) {
+    console.error('Error obteniendo jurados del concurso:', error.message);
+    return [];
+  }
+
+  return (data || []).map((d: any) => ({
+    ...d.jurado,
+    asignado_at: d.created_at,
+  }));
+}
+
+/**
+ * Obtener resumen de evaluaciones de un concurso para admin
+ */
+export async function getResumenEvaluacionesConcurso(concursoId: string): Promise<{
+  jurado_id: string;
+  jurado_nombre: string;
+  jurado_avatar: string | null;
+  total_evaluaciones: number;
+  promedio_dado: number;
+}[]> {
+  // Primero obtener las postulaciones del concurso
+  const { data: postulaciones } = await supabase
+    .from('postulaciones')
+    .select('id')
+    .eq('concurso_id', concursoId);
+
+  if (!postulaciones || postulaciones.length === 0) return [];
+
+  const postulacionIds = postulaciones.map(p => p.id);
+
+  // Obtener evaluaciones con info del jurado
+  const { data: evaluaciones, error } = await supabase
+    .from('evaluaciones')
+    .select(`
+      jurado_id,
+      puntaje_total,
+      jurado:profiles!jurado_id (
+        nombre_completo,
+        avatar_url
+      )
+    `)
+    .in('postulacion_id', postulacionIds);
+
+  if (error) {
+    console.error('Error obteniendo resumen:', error.message);
+    return [];
+  }
+
+  // Agrupar por jurado
+  const porJurado = new Map<string, {
+    nombre: string;
+    avatar: string | null;
+    puntajes: number[]
+  }>();
+
+  for (const e of evaluaciones || []) {
+    const existing = porJurado.get(e.jurado_id);
+    if (existing) {
+      existing.puntajes.push(e.puntaje_total);
+    } else {
+      porJurado.set(e.jurado_id, {
+        nombre: (e.jurado as any)?.nombre_completo || 'Jurado',
+        avatar: (e.jurado as any)?.avatar_url,
+        puntajes: [e.puntaje_total],
+      });
+    }
+  }
+
+  // Calcular promedios
+  return Array.from(porJurado.entries()).map(([juradoId, data]) => ({
+    jurado_id: juradoId,
+    jurado_nombre: data.nombre,
+    jurado_avatar: data.avatar,
+    total_evaluaciones: data.puntajes.length,
+    promedio_dado: data.puntajes.reduce((a, b) => a + b, 0) / data.puntajes.length,
+  }));
+}
+
+/**
+ * Obtener evaluaciones detalladas de un jurado en un concurso
+ */
+export async function getEvaluacionesDeJuradoEnConcurso(
+  concursoId: string,
+  juradoId: string
+): Promise<{
+  proyecto_titulo: string;
+  proyecto_id: string;
+  puntaje_innovacion: number;
+  puntaje_impacto: number;
+  puntaje_factibilidad: number;
+  puntaje_presentacion: number;
+  puntaje_total: number;
+  comentario: string | null;
+}[]> {
+  const { data, error } = await supabase
+    .from('evaluaciones')
+    .select(`
+      puntaje_innovacion,
+      puntaje_impacto,
+      puntaje_factibilidad,
+      puntaje_presentacion,
+      puntaje_total,
+      comentario,
+      postulacion:postulaciones!postulacion_id (
+        concurso_id,
+        proyecto:proyectos!proyecto_id (
+          id,
+          titulo
+        )
+      )
+    `)
+    .eq('jurado_id', juradoId);
+
+  if (error) {
+    console.error('Error obteniendo evaluaciones del jurado:', error.message);
+    return [];
+  }
+
+  // Filtrar solo las del concurso especificado
+  return (data || [])
+    .filter((e: any) => e.postulacion?.concurso_id === concursoId)
+    .map((e: any) => ({
+      proyecto_titulo: e.postulacion?.proyecto?.titulo || 'Proyecto',
+      proyecto_id: e.postulacion?.proyecto?.id,
+      puntaje_innovacion: e.puntaje_innovacion,
+      puntaje_impacto: e.puntaje_impacto,
+      puntaje_factibilidad: e.puntaje_factibilidad,
+      puntaje_presentacion: e.puntaje_presentacion,
+      puntaje_total: e.puntaje_total,
+      comentario: e.comentario,
+    }));
+}
+
+// ============================================================
 // AVANCES (Stories temporales)
 // ============================================================
 

@@ -123,48 +123,64 @@ export default function BarraAvances({
             animate={{ opacity: 1, scale: 1 }}
             className="flex flex-col items-center gap-1.5 flex-shrink-0"
           >
-            <button
-              onClick={misAvances ? () => onVerAvances(userId, misAvances.avances) : onCrearAvance}
-              className="relative group"
-            >
-              {/* Contenedor con preview */}
-              <div className={`w-20 h-28 rounded-xl overflow-hidden shadow-md transition-all duration-300 group-hover:shadow-lg group-hover:scale-[1.02] ${
-                misAvances
-                  ? ''
-                  : 'bg-gradient-to-br from-primary-100 via-primary-50 to-secondary-100 border-2 border-dashed border-primary-300'
-              }`}>
-                {misAvances ? (
-                  // Preview del último avance
-                  <>
-                    {misAvances.ultimoAvance.tipo_media === 'foto' ? (
-                      <img
-                        src={misAvances.ultimoAvance.media_url}
-                        alt="Tu avance"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <video
-                        src={misAvances.ultimoAvance.media_url}
-                        className="w-full h-full object-cover"
-                        muted
-                      />
-                    )}
-                    {/* Overlay con gradiente */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+            <div className="relative group">
+              {/* Tarjeta principal - ver avances o crear si no hay */}
+              <button
+                onClick={misAvances ? () => onVerAvances(userId, misAvances.avances) : onCrearAvance}
+                className="block"
+              >
+                {/* Contenedor con preview */}
+                <div className={`w-20 h-28 rounded-xl overflow-hidden shadow-md transition-all duration-300 group-hover:shadow-lg group-hover:scale-[1.02] ${
+                  misAvances
+                    ? ''
+                    : 'bg-gradient-to-br from-primary-100 via-primary-50 to-secondary-100 border-2 border-dashed border-primary-300'
+                }`}>
+                  {misAvances ? (
+                    // Preview del último avance
+                    <>
+                      {misAvances.ultimoAvance.tipo_media === 'foto' ? (
+                        <img
+                          src={misAvances.ultimoAvance.media_url}
+                          alt="Tu avance"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <video
+                          src={misAvances.ultimoAvance.media_url}
+                          className="w-full h-full object-cover"
+                          muted
+                        />
+                      )}
+                      {/* Overlay con gradiente */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded-xl" />
 
-                    {/* Anillo de color indicando estado */}
-                    <div className="absolute inset-0 rounded-xl ring-[3px] ring-inset ring-primary-500" />
-                  </>
-                ) : (
-                  // Estado vacío - crear nuevo
-                  <div className="w-full h-full flex flex-col items-center justify-center">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center shadow-lg mb-1">
-                      <span className="material-symbols-outlined text-white text-xl">add</span>
+                      {/* Anillo de color indicando estado */}
+                      <div className="absolute inset-0 rounded-xl ring-[3px] ring-inset ring-primary-500" />
+                    </>
+                  ) : (
+                    // Estado vacío - crear nuevo
+                    <div className="w-full h-full flex flex-col items-center justify-center">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center shadow-lg mb-1">
+                        <span className="material-symbols-outlined text-white text-xl">add</span>
+                      </div>
+                      <span className="text-[10px] font-medium text-primary-600">Crear</span>
                     </div>
-                    <span className="text-[10px] font-medium text-primary-600">Crear</span>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              </button>
+
+              {/* Botón "+" para agregar más avances (solo si ya tiene algunos) */}
+              {misAvances && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCrearAvance();
+                  }}
+                  className="absolute -top-1 -right-1 w-7 h-7 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-full flex items-center justify-center border-2 border-white shadow-lg hover:scale-110 transition-transform z-10"
+                >
+                  <span className="material-symbols-outlined text-white text-sm">add</span>
+                </button>
+              )}
 
               {/* Avatar pequeño en la esquina */}
               <div className={`absolute -bottom-1 -right-1 w-8 h-8 rounded-full border-[3px] border-white shadow-md overflow-hidden ${
@@ -185,11 +201,11 @@ export default function BarraAvances({
 
               {/* Indicador de cantidad */}
               {misAvances && misAvances.avances.length > 1 && (
-                <div className="absolute top-1 right-1 bg-black/70 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                <div className="absolute top-1 left-1 bg-black/70 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                   {misAvances.avances.length}
                 </div>
               )}
-            </button>
+            </div>
             <span className="text-xs font-medium text-surface-700 truncate max-w-[80px]">
               Tu avance
             </span>

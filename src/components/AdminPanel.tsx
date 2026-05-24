@@ -17,6 +17,7 @@ import {
   reactivarConcurso,
   eliminarConcurso,
 } from '../lib/database';
+import GestionJurados from './GestionJurados';
 
 interface AdminPanelProps {
   onVerConcurso?: (concursoId: string) => void;
@@ -30,6 +31,9 @@ export default function AdminPanel({ onVerConcurso }: AdminPanelProps) {
   const [editingConcurso, setEditingConcurso] = useState<ConcursoConStats | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mensaje, setMensaje] = useState<{ tipo: 'exito' | 'error'; texto: string } | null>(null);
+
+  // Tab principal: concursos o jurados
+  const [tabPrincipal, setTabPrincipal] = useState<'concursos' | 'jurados'>('concursos');
 
   // Formulario con 3 fechas
   const [formNombre, setFormNombre] = useState('');
@@ -276,15 +280,43 @@ export default function AdminPanel({ onVerConcurso }: AdminPanelProps) {
             </span>
             Panel de Administración
           </h1>
-          <p className="text-surface-500 mt-1">Gestiona concursos y convocatorias</p>
+          <p className="text-surface-500 mt-1">Gestiona concursos, jurados y convocatorias</p>
         </div>
 
+        {tabPrincipal === 'concursos' && (
+          <button
+            onClick={handleNuevoConcurso}
+            className="btn-primary py-2.5 px-5"
+          >
+            <span className="material-symbols-outlined">add</span>
+            Nuevo Concurso
+          </button>
+        )}
+      </div>
+
+      {/* Tabs principales */}
+      <div className="flex gap-2 p-1.5 bg-surface-100 rounded-xl mb-6">
         <button
-          onClick={handleNuevoConcurso}
-          className="btn-primary py-2.5 px-5"
+          onClick={() => setTabPrincipal('concursos')}
+          className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-semibold transition-all ${
+            tabPrincipal === 'concursos'
+              ? 'bg-white text-primary-600 shadow-sm'
+              : 'text-surface-600 hover:text-surface-900'
+          }`}
         >
-          <span className="material-symbols-outlined">add</span>
-          Nuevo Concurso
+          <span className="material-symbols-outlined text-xl">emoji_events</span>
+          Concursos
+        </button>
+        <button
+          onClick={() => setTabPrincipal('jurados')}
+          className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-semibold transition-all ${
+            tabPrincipal === 'jurados'
+              ? 'bg-white text-primary-600 shadow-sm'
+              : 'text-surface-600 hover:text-surface-900'
+          }`}
+        >
+          <span className="material-symbols-outlined text-xl">gavel</span>
+          Jurados
         </button>
       </div>
 
@@ -309,47 +341,54 @@ export default function AdminPanel({ onVerConcurso }: AdminPanelProps) {
         )}
       </AnimatePresence>
 
-      {/* Lista de concursos */}
-      {loading ? (
-        <div className="text-center py-12">
-          <span className="material-symbols-outlined text-4xl text-primary-500 animate-spin">
-            progress_activity
-          </span>
-          <p className="text-surface-500 mt-2">Cargando concursos...</p>
-        </div>
-      ) : concursos.length === 0 ? (
-        <div className="bg-white rounded-2xl p-12 border border-surface-200 shadow-soft text-center">
-          <span className="material-symbols-outlined text-6xl text-surface-300 mb-4">
-            emoji_events
-          </span>
-          <h3 className="text-lg font-semibold text-surface-700 mb-2">
-            No hay concursos creados
-          </h3>
-          <p className="text-surface-500 mb-6">
-            Crea tu primer concurso para que los usuarios puedan postular sus proyectos.
-          </p>
-          <button onClick={handleNuevoConcurso} className="btn-primary">
-            <span className="material-symbols-outlined">add</span>
-            Crear primer concurso
-          </button>
-        </div>
-      ) : (
-        <div className="grid gap-4">
-          {concursos.map((concurso) => (
-            <ConcursoCard
-              key={concurso.id}
-              concurso={concurso}
-              onEditar={() => handleEditarConcurso(concurso)}
-              onIniciarEvaluacion={() => handleIniciarEvaluacion(concurso)}
-              onFinalizar={() => handleFinalizarConcurso(concurso)}
-              onCancelar={() => handleCancelarConcurso(concurso)}
-              onReactivar={() => handleReactivarConcurso(concurso)}
-              onEliminar={() => handleEliminarConcurso(concurso)}
-              onVer={() => onVerConcurso?.(concurso.id)}
-              formatearFecha={formatearFecha}
-            />
-          ))}
-        </div>
+      {/* Tab: Jurados */}
+      {tabPrincipal === 'jurados' && user && (
+        <GestionJurados adminId={user.id} />
+      )}
+
+      {/* Tab: Concursos - Lista de concursos */}
+      {tabPrincipal === 'concursos' && (
+        loading ? (
+          <div className="text-center py-12">
+            <span className="material-symbols-outlined text-4xl text-primary-500 animate-spin">
+              progress_activity
+            </span>
+            <p className="text-surface-500 mt-2">Cargando concursos...</p>
+          </div>
+        ) : concursos.length === 0 ? (
+          <div className="bg-white rounded-2xl p-12 border border-surface-200 shadow-soft text-center">
+            <span className="material-symbols-outlined text-6xl text-surface-300 mb-4">
+              emoji_events
+            </span>
+            <h3 className="text-lg font-semibold text-surface-700 mb-2">
+              No hay concursos creados
+            </h3>
+            <p className="text-surface-500 mb-6">
+              Crea tu primer concurso para que los usuarios puedan postular sus proyectos.
+            </p>
+            <button onClick={handleNuevoConcurso} className="btn-primary">
+              <span className="material-symbols-outlined">add</span>
+              Crear primer concurso
+            </button>
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {concursos.map((concurso) => (
+              <ConcursoCard
+                key={concurso.id}
+                concurso={concurso}
+                onEditar={() => handleEditarConcurso(concurso)}
+                onIniciarEvaluacion={() => handleIniciarEvaluacion(concurso)}
+                onFinalizar={() => handleFinalizarConcurso(concurso)}
+                onCancelar={() => handleCancelarConcurso(concurso)}
+                onReactivar={() => handleReactivarConcurso(concurso)}
+                onEliminar={() => handleEliminarConcurso(concurso)}
+                onVer={() => onVerConcurso?.(concurso.id)}
+                formatearFecha={formatearFecha}
+              />
+            ))}
+          </div>
+        )
       )}
 
       {/* Modal Crear/Editar Concurso */}

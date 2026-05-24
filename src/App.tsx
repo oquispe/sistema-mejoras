@@ -818,6 +818,36 @@ export default function App() {
                     </p>
                   </div>
                 </div>
+
+                {/* Accesos rápidos para Admin y Jurado (visible en móvil) */}
+                {(profile?.rol === "admin" || profile?.rol === "jurado") && (
+                  <div className="mt-4 pt-4 border-t border-surface-100 grid grid-cols-2 gap-3 lg:hidden">
+                    {profile.rol === "admin" && (
+                      <button
+                        onClick={() => handleChangeTab("admin")}
+                        className="flex items-center gap-3 p-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl shadow-sm"
+                      >
+                        <span className="material-symbols-outlined text-2xl">admin_panel_settings</span>
+                        <div className="text-left">
+                          <p className="font-semibold text-sm">Panel Admin</p>
+                          <p className="text-[10px] text-white/80">Gestionar concursos</p>
+                        </div>
+                      </button>
+                    )}
+                    {(profile.rol === "admin" || profile.rol === "jurado") && (
+                      <button
+                        onClick={() => handleChangeTab("jurado")}
+                        className="flex items-center gap-3 p-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl shadow-sm"
+                      >
+                        <span className="material-symbols-outlined text-2xl">gavel</span>
+                        <div className="text-left">
+                          <p className="font-semibold text-sm">Panel Jurado</p>
+                          <p className="text-[10px] text-white/80">Evaluar proyectos</p>
+                        </div>
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
 
               <h2 className="text-lg font-bold text-on-surface mb-4">Mis proyectos</h2>
@@ -939,11 +969,21 @@ export default function App() {
 
         <button
           onClick={() => handleChangeTab("profile")}
-          className={`flex flex-col items-center gap-1 min-w-[56px] py-2 rounded-xl transition-all ${
-            currentTab === "profile" ? "text-primary-600" : "text-surface-400 hover:text-surface-600"
+          className={`flex flex-col items-center gap-1 min-w-[56px] py-2 rounded-xl transition-all relative ${
+            currentTab === "profile" || currentTab === "admin" || currentTab === "jurado"
+              ? "text-primary-600"
+              : "text-surface-400 hover:text-surface-600"
           }`}
         >
-          <span className="material-symbols-outlined text-[24px]">person</span>
+          <div className="relative">
+            <span className="material-symbols-outlined text-[24px]">person</span>
+            {/* Badge para admin/jurado */}
+            {(profile?.rol === "admin" || profile?.rol === "jurado") && (
+              <span className={`absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full border-2 border-white ${
+                profile.rol === "admin" ? "bg-purple-500" : "bg-amber-500"
+              }`} />
+            )}
+          </div>
           <span className="text-[11px] font-semibold">Perfil</span>
         </button>
       </nav>
