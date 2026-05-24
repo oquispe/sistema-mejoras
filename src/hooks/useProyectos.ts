@@ -15,12 +15,13 @@ import {
   crearProyecto,
   actualizarProyecto,
   eliminarProyecto,
-  toggleLike
+  toggleLike,
+  getArchivosPorProyectos,
 } from '../lib/database';
 import { useAuth } from '../context/AuthContext';
 
 export function useProyectos() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [proyectos, setProyectos] = useState<ProyectoConStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +34,18 @@ export function useProyectos() {
 
     try {
       const data = await getProyectos(user?.id);
-      setProyectos(data);
+
+      // Cargar archivos de todos los proyectos
+      const proyectoIds = data.map(p => p.id);
+      const archivosPorProyecto = await getArchivosPorProyectos(proyectoIds);
+
+      // Agregar archivos a cada proyecto
+      const proyectosConArchivos = data.map(p => ({
+        ...p,
+        archivos: archivosPorProyecto.get(p.id) || [],
+      }));
+
+      setProyectos(proyectosConArchivos);
     } catch (err) {
       setError('Error cargando proyectos');
       console.error(err);
@@ -57,12 +69,12 @@ export function useProyectos() {
     area: string;
     tipo: 'produccion' | 'calidad' | 'seguridad';
     imagen_url?: string;
-  }): Promise<{ success: boolean; error?: string }> => {
+  }): Promise<{ success: boolean; error?: string; proyectoId?: string }> => {
     if (!user) {
       return { success: false, error: 'Debes iniciar sesión' };
     }
 
-    const { error } = await crearProyecto({
+    const { data, error } = await crearProyecto({
       ...datos,
       autor_id: user.id,
     });
@@ -74,7 +86,7 @@ export function useProyectos() {
     // Recargar proyectos
     await cargarProyectos();
 
-    return { success: true };
+    return { success: true, proyectoId: data?.id };
   };
 
   // Editar proyecto
@@ -150,7 +162,7 @@ export function useProyectos() {
     );
 
     // Enviar a Supabase
-    const { error } = await toggleLike(proyectoId, user.id);
+    const { error } = await toggleLike(proyectoId, user.id, profile?.nombre_completo);
 
     if (error) {
       await cargarProyectos();

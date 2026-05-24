@@ -43,7 +43,8 @@ export default function Comentarios({ proyectoId, onComentarioCreado }: Comentar
     const { data, error } = await crearComentario(
       proyectoId,
       user.id,
-      nuevoComentario.trim()
+      nuevoComentario.trim(),
+      profile?.nombre_completo
     );
 
     if (data && !error) {
@@ -100,8 +101,20 @@ export default function Comentarios({ proyectoId, onComentarioCreado }: Comentar
       {/* Formulario de nuevo comentario */}
       <form onSubmit={handleEnviar} className="mb-6">
         <div className="flex gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary flex-shrink-0 flex items-center justify-center text-white font-bold text-sm">
-            {profile?.nombre_completo?.charAt(0).toUpperCase() || '?'}
+          {/* Avatar del usuario actual */}
+          <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-surface-100">
+            {profile?.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt={profile.nombre_completo}
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="w-full h-full bg-primary flex items-center justify-center text-white font-bold text-sm">
+                {profile?.nombre_completo?.charAt(0).toUpperCase() || '?'}
+              </div>
+            )}
           </div>
           <div className="flex-grow">
             <textarea
@@ -157,9 +170,20 @@ export default function Comentarios({ proyectoId, onComentarioCreado }: Comentar
                 exit={{ opacity: 0, x: -20 }}
                 className="flex gap-3"
               >
-                {/* Avatar */}
-                <div className="w-10 h-10 rounded-full bg-secondary/20 flex-shrink-0 flex items-center justify-center text-secondary font-bold text-sm">
-                  {comentario.autor_nombre?.charAt(0).toUpperCase() || '?'}
+                {/* Avatar del comentarista */}
+                <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-surface-100">
+                  {comentario.autor_avatar ? (
+                    <img
+                      src={comentario.autor_avatar}
+                      alt={comentario.autor_nombre}
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-secondary/20 flex items-center justify-center text-secondary font-bold text-sm">
+                      {comentario.autor_nombre?.charAt(0).toUpperCase() || '?'}
+                    </div>
+                  )}
                 </div>
 
                 {/* Contenido */}
