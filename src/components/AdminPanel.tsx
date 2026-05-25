@@ -16,8 +16,19 @@ import {
   cancelarConcurso,
   reactivarConcurso,
   eliminarConcurso,
+  getEstadoEvaluacionesJurados,
 } from '../lib/database';
 import GestionJurados from './GestionJurados';
+
+interface EstadoJurado {
+  jurado_id: string;
+  jurado_nombre: string;
+  jurado_avatar: string | null;
+  total_proyectos: number;
+  evaluados: number;
+  pendientes: number;
+  completado: boolean;
+}
 
 interface AdminPanelProps {
   onVerConcurso?: (concursoId: string) => void;
@@ -34,6 +45,12 @@ export default function AdminPanel({ onVerConcurso }: AdminPanelProps) {
 
   // Tab principal: concursos o jurados
   const [tabPrincipal, setTabPrincipal] = useState<'concursos' | 'jurados'>('concursos');
+
+  // Modal de confirmación para finalizar con estado de jurados
+  const [showFinalizarModal, setShowFinalizarModal] = useState(false);
+  const [concursoAFinalizar, setConcursoAFinalizar] = useState<ConcursoConStats | null>(null);
+  const [estadoJurados, setEstadoJurados] = useState<EstadoJurado[]>([]);
+  const [loadingEstado, setLoadingEstado] = useState(false);
 
   // Formulario con 3 fechas
   const [formNombre, setFormNombre] = useState('');
@@ -183,13 +200,23 @@ export default function AdminPanel({ onVerConcurso }: AdminPanelProps) {
     }
   }
 
-  // Finalizar concurso
-  async function handleFinalizarConcurso(concurso: ConcursoConStats) {
-    if (!confirm(`¿Finalizar el concurso "${concurso.nombre}"? Se mostrarán los resultados finales.`)) {
-      return;
-    }
+  // Abrir modal de finalizar con estado de jurados
+  async function handleAbrirFinalizarModal(concurso: ConcursoConStats) {
+    setConcursoAFinalizar(concurso);
+    setShowFinalizarModal(true);
+    setLoadingEstado(true);
 
-    const { error } = await finalizarConcurso(concurso.id);
+    const estado = await getEstadoEvaluacionesJurados(concurso.id);
+    setEstadoJurados(estado);
+    setLoadingEstado(false);
+  }
+
+  // Confirmar finalización del concurso
+  async function handleConfirmarFinalizar() {
+    if (!concursoAFinalizar) return;
+
+    setIsSubmitting(true);
+    const { error } = await finalizarConcurso(concursoAFinalizar.id);
 
     if (error) {
       setMensaje({ tipo: 'error', texto: error });
@@ -197,6 +224,11 @@ export default function AdminPanel({ onVerConcurso }: AdminPanelProps) {
       setMensaje({ tipo: 'exito', texto: 'Concurso finalizado' });
       cargarConcursos();
     }
+
+    setShowFinalizarModal(false);
+    setConcursoAFinalizar(null);
+    setEstadoJurados([]);
+    setIsSubmitting(false);
   }
 
   // Cancelar concurso
@@ -379,7 +411,7 @@ export default function AdminPanel({ onVerConcurso }: AdminPanelProps) {
                 concurso={concurso}
                 onEditar={() => handleEditarConcurso(concurso)}
                 onIniciarEvaluacion={() => handleIniciarEvaluacion(concurso)}
-                onFinalizar={() => handleFinalizarConcurso(concurso)}
+                onFinalizar={() => handleAbrirFinalizarModal(concurso)}
                 onCancelar={() => handleCancelarConcurso(concurso)}
                 onReactivar={() => handleReactivarConcurso(concurso)}
                 onEliminar={() => handleEliminarConcurso(concurso)}
@@ -556,6 +588,174 @@ export default function AdminPanel({ onVerConcurso }: AdminPanelProps) {
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal de Finalizar Concurso con Estado de Jurados */}
+      <AnimatePresence>
+        {showFinalizarModal && concursoAFinalizar && (
+          <div className="fixed inset-0 bg-surface-900/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white w-full max-w-lg rounded-2xl shadow-soft-lg overflow-hidden"
+            >
+              {/* Header */}
+              <div className="flex items-center gap-4 p-6 border-b border-surface-100 bg-gradient-to-r from-amber-500 to-orange-500">
+                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                  <span className="material-symbols-outlined text-white text-2xl">emoji_events</span>
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-display text-xl font-bold text-white">
+                    Finalizar Concurso
+                  </h3>
+                  <p className="text-sm text-white/80">
+                    {concursoAFinalizar.nombre}
+                  </p>
+                </div>
+                <button
+                  onClick={() => { setShowFinalizarModal(false); setConcursoAFinalizar(null); }}
+                  className="p-2 hover:bg-white/20 rounded-xl transition-colors"
+                >
+                  <span className="material-symbols-outlined text-white">close</span>
+                </button>
+              </div>
+
+              {/* Contenido */}
+              <div className="p-6">
+                <h4 className="font-semibold text-surface-800 mb-4 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-lg text-amber-500">gavel</span>
+                  Estado de Evaluaciones por Jurado
+                </h4>
+
+                {loadingEstado ? (
+                  <div className="text-center py-8">
+                    <span className="material-symbols-outlined text-3xl text-primary-500 animate-spin">
+                      progress_activity
+                    </span>
+                    <p className="text-surface-500 mt-2 text-sm">Cargando estado...</p>
+                  </div>
+                ) : estadoJurados.length === 0 ? (
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
+                    <span className="material-symbols-outlined text-3xl text-amber-500 mb-2">warning</span>
+                    <p className="text-amber-700 font-medium">No hay jurados asignados</p>
+                    <p className="text-amber-600 text-sm mt-1">
+                      Asigna jurados antes de finalizar el concurso
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-64 overflow-y-auto">
+                    {estadoJurados.map((jurado) => (
+                      <div
+                        key={jurado.jurado_id}
+                        className={`flex items-center gap-3 p-3 rounded-xl border ${
+                          jurado.completado
+                            ? 'bg-green-50 border-green-200'
+                            : 'bg-amber-50 border-amber-200'
+                        }`}
+                      >
+                        {/* Avatar */}
+                        <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                          {jurado.jurado_avatar ? (
+                            <img src={jurado.jurado_avatar} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className={`w-full h-full flex items-center justify-center text-white font-bold ${
+                              jurado.completado ? 'bg-green-500' : 'bg-amber-500'
+                            }`}>
+                              {jurado.jurado_nombre.charAt(0)}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-surface-900 truncate text-sm">
+                            {jurado.jurado_nombre}
+                          </p>
+                          <p className={`text-xs ${jurado.completado ? 'text-green-600' : 'text-amber-600'}`}>
+                            {jurado.evaluados}/{jurado.total_proyectos} evaluados
+                          </p>
+                        </div>
+
+                        {/* Estado */}
+                        {jurado.completado ? (
+                          <span className="flex items-center gap-1 text-green-600 text-xs font-semibold">
+                            <span className="material-symbols-outlined text-lg">check_circle</span>
+                            Completo
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1 text-amber-600 text-xs font-semibold">
+                            <span className="material-symbols-outlined text-lg">pending</span>
+                            {jurado.pendientes} pendiente{jurado.pendientes > 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Resumen */}
+                {!loadingEstado && estadoJurados.length > 0 && (
+                  <div className={`mt-4 p-3 rounded-xl text-center ${
+                    estadoJurados.every(j => j.completado)
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-amber-100 text-amber-700'
+                  }`}>
+                    {estadoJurados.every(j => j.completado) ? (
+                      <p className="font-semibold">
+                        <span className="material-symbols-outlined text-lg align-middle mr-1">verified</span>
+                        Todos los jurados han completado sus evaluaciones
+                      </p>
+                    ) : (
+                      <p className="font-semibold">
+                        <span className="material-symbols-outlined text-lg align-middle mr-1">warning</span>
+                        {estadoJurados.filter(j => !j.completado).length} jurado(s) con evaluaciones pendientes
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Advertencia */}
+                <div className="mt-4 p-3 bg-surface-50 rounded-xl text-sm text-surface-600">
+                  <p className="flex items-start gap-2">
+                    <span className="material-symbols-outlined text-lg text-surface-400">info</span>
+                    <span>
+                      Al finalizar, se calcularán los promedios de las evaluaciones existentes
+                      y se mostrarán los resultados públicamente.
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Botones */}
+              <div className="flex gap-3 p-4 border-t border-surface-100">
+                <button
+                  onClick={() => { setShowFinalizarModal(false); setConcursoAFinalizar(null); }}
+                  className="btn-secondary flex-1"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleConfirmarFinalizar}
+                  disabled={isSubmitting}
+                  className="btn-primary flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                      Finalizando...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined">emoji_events</span>
+                      Finalizar Concurso
+                    </>
+                  )}
+                </button>
+              </div>
             </motion.div>
           </div>
         )}

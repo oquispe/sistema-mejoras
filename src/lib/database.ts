@@ -1342,6 +1342,79 @@ export async function getRankingConcurso(concursoId: string): Promise<RankingPro
 }
 
 /**
+ * Obtener estado de evaluaciones de todos los jurados de un concurso
+ * Útil para que el admin vea quién falta por evaluar antes de finalizar
+ */
+export async function getEstadoEvaluacionesJurados(concursoId: string): Promise<{
+  jurado_id: string;
+  jurado_nombre: string;
+  jurado_avatar: string | null;
+  total_proyectos: number;
+  evaluados: number;
+  pendientes: number;
+  completado: boolean;
+}[]> {
+  // Obtener jurados asignados al concurso
+  const { data: asignaciones, error: errorAsig } = await supabase
+    .from('concurso_jurados')
+    .select(`
+      jurado_id,
+      jurado:profiles!jurado_id (
+        nombre_completo,
+        avatar_url
+      )
+    `)
+    .eq('concurso_id', concursoId);
+
+  if (errorAsig || !asignaciones) {
+    console.error('Error obteniendo jurados:', errorAsig?.message);
+    return [];
+  }
+
+  // Obtener postulaciones del concurso
+  const { data: postulaciones } = await supabase
+    .from('postulaciones')
+    .select('id, proyecto:proyectos!proyecto_id(autor_id)')
+    .eq('concurso_id', concursoId);
+
+  // Para cada jurado, contar cuántos ha evaluado
+  const resultado = await Promise.all(
+    asignaciones.map(async (asig: any) => {
+      // Proyectos que el jurado puede evaluar (excluyendo los propios)
+      const proyectosEvaluables = postulaciones?.filter(
+        (p: any) => p.proyecto?.autor_id !== asig.jurado_id
+      ) || [];
+
+      const postulacionIds = proyectosEvaluables.map((p: any) => p.id);
+
+      let evaluados = 0;
+      if (postulacionIds.length > 0) {
+        const { count } = await supabase
+          .from('evaluaciones')
+          .select('*', { count: 'exact', head: true })
+          .eq('jurado_id', asig.jurado_id)
+          .in('postulacion_id', postulacionIds);
+        evaluados = count || 0;
+      }
+
+      const pendientes = proyectosEvaluables.length - evaluados;
+
+      return {
+        jurado_id: asig.jurado_id,
+        jurado_nombre: asig.jurado?.nombre_completo || 'Sin nombre',
+        jurado_avatar: asig.jurado?.avatar_url || null,
+        total_proyectos: proyectosEvaluables.length,
+        evaluados,
+        pendientes,
+        completado: pendientes === 0,
+      };
+    })
+  );
+
+  return resultado;
+}
+
+/**
  * Contar evaluaciones pendientes de un jurado en un concurso
  */
 export async function contarEvaluacionesPendientes(
