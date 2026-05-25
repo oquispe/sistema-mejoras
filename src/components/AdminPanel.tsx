@@ -275,17 +275,6 @@ export default function AdminPanel({ onVerConcurso }: AdminPanelProps) {
     }
   }
 
-  // Formatear fecha para mostrar
-  function formatearFecha(fecha: string): string {
-    return new Date(fecha).toLocaleDateString('es-PE', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  }
-
   // Si no es admin, mostrar mensaje
   if (!esAdmin) {
     return (
@@ -416,7 +405,6 @@ export default function AdminPanel({ onVerConcurso }: AdminPanelProps) {
                 onReactivar={() => handleReactivarConcurso(concurso)}
                 onEliminar={() => handleEliminarConcurso(concurso)}
                 onVer={() => onVerConcurso?.(concurso.id)}
-                formatearFecha={formatearFecha}
               />
             ))}
           </div>
@@ -776,7 +764,6 @@ function ConcursoCard({
   onReactivar,
   onEliminar,
   onVer,
-  formatearFecha,
 }: {
   concurso: ConcursoConStats;
   onEditar: () => void;
@@ -786,7 +773,6 @@ function ConcursoCard({
   onReactivar: () => void;
   onEliminar: () => void;
   onVer: () => void;
-  formatearFecha: (fecha: string) => string;
 }) {
   const [showMenu, setShowMenu] = useState(false);
 
@@ -804,59 +790,33 @@ function ConcursoCard({
   const config = faseConfig[fase];
 
   return (
-    <div className="bg-white rounded-2xl border border-surface-200 shadow-soft p-5 hover:shadow-soft-lg transition-shadow">
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-        {/* Info principal */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold ${config.color}`}>
-              <span className="material-symbols-outlined text-sm">{config.icon}</span>
-              {config.label}
-            </span>
-            <span className="text-xs text-surface-400">
-              {concurso.total_postulaciones} postulaciones
-            </span>
-          </div>
-
-          <h3 className="text-lg font-bold text-surface-900 mb-1">{concurso.nombre}</h3>
-
-          {concurso.descripcion && (
-            <p className="text-sm text-surface-500 mb-3 line-clamp-2">{concurso.descripcion}</p>
-          )}
-
-          {/* Fechas con iconos de fase */}
-          <div className="flex flex-col gap-1 text-xs text-surface-500">
-            <div className="flex items-center gap-4 flex-wrap">
-              <div className="flex items-center gap-1">
-                <span className="material-symbols-outlined text-sm text-blue-400">play_arrow</span>
-                <span>Postulación: {formatearFecha(concurso.fecha_inicio_postulacion)}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="material-symbols-outlined text-sm text-blue-400">stop</span>
-                <span>Cierre: {formatearFecha(concurso.fecha_fin_postulacion)}</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-sm text-amber-400">flag</span>
-              <span>Fin evaluación: {formatearFecha(concurso.fecha_fin_evaluacion)}</span>
-            </div>
-          </div>
+    <div className="bg-white rounded-2xl border border-surface-200 shadow-soft p-4 sm:p-5 hover:shadow-soft-lg transition-shadow">
+      {/* Header con estado y acciones */}
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] sm:text-xs font-semibold ${config.color}`}>
+            <span className="material-symbols-outlined text-sm">{config.icon}</span>
+            <span className="hidden sm:inline">{config.label}</span>
+          </span>
+          <span className="text-[11px] sm:text-xs text-surface-400">
+            {concurso.total_postulaciones} proyectos
+          </span>
         </div>
 
-        {/* Acciones */}
-        <div className="flex items-center gap-2">
+        {/* Acciones compactas */}
+        <div className="flex items-center gap-1">
           <button
             onClick={onVer}
-            className="px-3 py-2 text-sm font-medium text-primary-600 hover:bg-primary-50 rounded-xl transition-colors flex items-center gap-1"
+            className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+            title="Ver concurso"
           >
-            <span className="material-symbols-outlined text-lg">visibility</span>
-            Ver
+            <span className="material-symbols-outlined text-xl">visibility</span>
           </button>
 
           <div className="relative">
             <button
               onClick={() => setShowMenu(!showMenu)}
-              className="p-2 hover:bg-surface-100 rounded-xl transition-colors"
+              className="p-2 hover:bg-surface-100 rounded-lg transition-colors"
             >
               <span className="material-symbols-outlined text-surface-400">more_vert</span>
             </button>
@@ -864,20 +824,24 @@ function ConcursoCard({
             {showMenu && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-                <div className="absolute right-0 top-12 bg-white rounded-xl shadow-soft-lg border border-surface-200 py-1.5 w-52 z-50">
+                <div className="fixed sm:absolute inset-x-4 sm:inset-x-auto bottom-4 sm:bottom-auto sm:right-0 sm:top-12 bg-white rounded-2xl sm:rounded-xl shadow-2xl sm:shadow-soft-lg border border-surface-200 py-2 sm:w-48 z-50">
+                  {/* Título solo en móvil */}
+                  <div className="px-4 py-2 border-b border-surface-100 sm:hidden">
+                    <p className="font-semibold text-surface-700 text-sm">Acciones</p>
+                  </div>
+
                   <button
                     onClick={() => { setShowMenu(false); onEditar(); }}
-                    className="w-full px-4 py-2 text-left text-sm text-surface-700 hover:bg-surface-50 flex items-center gap-2"
+                    className="w-full px-4 py-3 sm:py-2 text-left text-sm text-surface-700 hover:bg-surface-50 flex items-center gap-3"
                   >
                     <span className="material-symbols-outlined text-lg text-surface-400">edit</span>
                     Editar
                   </button>
 
-                  {/* Acciones según la fase actual */}
                   {(fase === 'en_proceso' || fase === 'postulacion') && (
                     <button
                       onClick={() => { setShowMenu(false); onIniciarEvaluacion(); }}
-                      className="w-full px-4 py-2 text-left text-sm text-amber-600 hover:bg-amber-50 flex items-center gap-2"
+                      className="w-full px-4 py-3 sm:py-2 text-left text-sm text-amber-600 hover:bg-amber-50 flex items-center gap-3"
                     >
                       <span className="material-symbols-outlined text-lg">rate_review</span>
                       Iniciar evaluación
@@ -887,30 +851,30 @@ function ConcursoCard({
                   {fase === 'evaluacion' && (
                     <button
                       onClick={() => { setShowMenu(false); onFinalizar(); }}
-                      className="w-full px-4 py-2 text-left text-sm text-green-600 hover:bg-green-50 flex items-center gap-2"
+                      className="w-full px-4 py-3 sm:py-2 text-left text-sm text-green-600 hover:bg-green-50 flex items-center gap-3"
                     >
                       <span className="material-symbols-outlined text-lg">emoji_events</span>
-                      Finalizar y mostrar ganadores
+                      Finalizar
                     </button>
                   )}
 
                   {fase !== 'finalizado' && fase !== 'cancelado' && (
                     <button
                       onClick={() => { setShowMenu(false); onCancelar(); }}
-                      className="w-full px-4 py-2 text-left text-sm text-yellow-600 hover:bg-yellow-50 flex items-center gap-2"
+                      className="w-full px-4 py-3 sm:py-2 text-left text-sm text-yellow-600 hover:bg-yellow-50 flex items-center gap-3"
                     >
                       <span className="material-symbols-outlined text-lg">cancel</span>
-                      Cancelar concurso
+                      Cancelar
                     </button>
                   )}
 
                   {(fase === 'cancelado' || fase === 'finalizado') && (
                     <button
                       onClick={() => { setShowMenu(false); onReactivar(); }}
-                      className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 flex items-center gap-2"
+                      className="w-full px-4 py-3 sm:py-2 text-left text-sm text-blue-600 hover:bg-blue-50 flex items-center gap-3"
                     >
                       <span className="material-symbols-outlined text-lg">refresh</span>
-                      Reactivar concurso
+                      Reactivar
                     </button>
                   )}
 
@@ -918,15 +882,48 @@ function ConcursoCard({
 
                   <button
                     onClick={() => { setShowMenu(false); onEliminar(); }}
-                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                    className="w-full px-4 py-3 sm:py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-3"
                   >
                     <span className="material-symbols-outlined text-lg">delete</span>
                     Eliminar
                   </button>
+
+                  {/* Botón cerrar solo en móvil */}
+                  <div className="px-4 pt-2 sm:hidden">
+                    <button
+                      onClick={() => setShowMenu(false)}
+                      className="w-full py-3 bg-surface-100 text-surface-700 rounded-xl font-medium text-sm"
+                    >
+                      Cerrar
+                    </button>
+                  </div>
                 </div>
               </>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Título y descripción */}
+      <h3 className="text-base sm:text-lg font-bold text-surface-900 mb-1 line-clamp-1">{concurso.nombre}</h3>
+
+      {concurso.descripcion && (
+        <p className="text-xs sm:text-sm text-surface-500 mb-3 line-clamp-2">{concurso.descripcion}</p>
+      )}
+
+      {/* Fechas compactas */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] sm:text-xs">
+        <div className="flex items-center gap-1.5 text-surface-500 bg-surface-50 px-2 py-1.5 rounded-lg">
+          <span className="material-symbols-outlined text-sm text-blue-400">play_arrow</span>
+          <span className="truncate">Inicio: {new Date(concurso.fecha_inicio_postulacion).toLocaleDateString('es-PE', { day: '2-digit', month: 'short' })}</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-surface-500 bg-surface-50 px-2 py-1.5 rounded-lg">
+          <span className="material-symbols-outlined text-sm text-blue-400">stop</span>
+          <span className="truncate">Cierre: {new Date(concurso.fecha_fin_postulacion).toLocaleDateString('es-PE', { day: '2-digit', month: 'short' })}</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-surface-500 bg-surface-50 px-2 py-1.5 rounded-lg">
+          <span className="material-symbols-outlined text-sm text-amber-400">flag</span>
+          <span className="truncate">Eval: {new Date(concurso.fecha_fin_evaluacion).toLocaleDateString('es-PE', { day: '2-digit', month: 'short' })}</span>
         </div>
       </div>
     </div>
