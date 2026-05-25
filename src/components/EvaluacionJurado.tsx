@@ -8,6 +8,7 @@ import { ConcursoConStats, PostulacionConDetalles, Evaluacion, CRITERIOS_EVALUAC
 import { useAuth } from '../context/AuthContext';
 import {
   getConcursos,
+  getConcursosAsignadosAJurado,
   getPostulacionesParaEvaluar,
   guardarEvaluacion,
   getArchivosProyecto,
@@ -47,19 +48,29 @@ export default function EvaluacionJurado() {
 
   const esJurado = profile?.rol === 'jurado' || profile?.rol === 'admin';
 
-  // Cargar concursos en evaluación
+  // Cargar concursos asignados al jurado en evaluación
   useEffect(() => {
-    if (esJurado) {
+    if (esJurado && user) {
       cargarConcursos();
     }
-  }, [esJurado]);
+  }, [esJurado, user]);
 
   async function cargarConcursos() {
+    if (!user) return;
     setLoading(true);
-    const data = await getConcursos();
-    // Filtrar solo los que están en evaluación
-    const enEvaluacion = data.filter(c => c.fase_actual === 'evaluacion');
-    setConcursos(enEvaluacion);
+
+    // Si es admin, mostrar todos los concursos en evaluación
+    // Si es jurado, mostrar solo los concursos asignados
+    if (profile?.rol === 'admin') {
+      const data = await getConcursos();
+      const enEvaluacion = data.filter(c => c.fase_actual === 'evaluacion');
+      setConcursos(enEvaluacion);
+    } else {
+      // Jurado: solo concursos asignados
+      const data = await getConcursosAsignadosAJurado(user.id);
+      setConcursos(data);
+    }
+
     setLoading(false);
   }
 
@@ -660,10 +671,12 @@ export default function EvaluacionJurado() {
             hourglass_empty
           </span>
           <h3 className="text-lg font-semibold text-surface-700 mb-2">
-            No hay concursos en evaluación
+            No tienes concursos asignados para evaluar
           </h3>
           <p className="text-surface-500 text-sm">
-            Cuando un administrador inicie la fase de evaluación de un concurso, aparecerá aquí.
+            {profile?.rol === 'admin'
+              ? 'No hay concursos en fase de evaluación actualmente.'
+              : 'El administrador debe asignarte a un concurso para que puedas evaluar sus proyectos.'}
           </p>
         </div>
       ) : (

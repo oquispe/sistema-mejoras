@@ -1511,6 +1511,69 @@ export async function getJuradosDeConcurso(concursoId: string): Promise<(Profile
 }
 
 /**
+ * Obtener concursos asignados a un jurado (solo los que están en evaluación)
+ */
+export async function getConcursosAsignadosAJurado(juradoId: string): Promise<ConcursoConStats[]> {
+  // Obtener IDs de concursos asignados al jurado
+  const { data: asignaciones, error: errorAsignaciones } = await supabase
+    .from('concurso_jurados')
+    .select('concurso_id')
+    .eq('jurado_id', juradoId);
+
+  if (errorAsignaciones) {
+    console.error('Error obteniendo asignaciones:', errorAsignaciones.message);
+    return [];
+  }
+
+  if (!asignaciones || asignaciones.length === 0) {
+    return [];
+  }
+
+  const concursoIds = asignaciones.map(a => a.concurso_id);
+
+  // Obtener los concursos que están en evaluación
+  const { data: concursos, error } = await supabase
+    .from('concursos')
+    .select(`
+      *,
+      creador:profiles!creado_por (
+        nombre_completo,
+        avatar_url
+      )
+    `)
+    .in('id', concursoIds)
+    .eq('estado', 'evaluacion')
+    .order('fecha_fin_evaluacion', { ascending: true });
+
+  if (error) {
+    console.error('Error obteniendo concursos del jurado:', error.message);
+    return [];
+  }
+
+  // Agregar conteo de postulaciones
+  const concursosConStats: ConcursoConStats[] = await Promise.all(
+    (concursos || []).map(async (c: any) => {
+      const { count } = await supabase
+        .from('postulaciones')
+        .select('*', { count: 'exact', head: true })
+        .eq('concurso_id', c.id);
+
+      return {
+        ...c,
+        creador_nombre: c.creador?.nombre_completo,
+        creador_avatar: c.creador?.avatar_url,
+        total_postulaciones: count || 0,
+        fase_actual: 'evaluacion' as FaseConcurso,
+        puede_postular: false,
+        puede_evaluar: true,
+      };
+    })
+  );
+
+  return concursosConStats;
+}
+
+/**
  * Obtener resumen de evaluaciones de un concurso para admin
  */
 export async function getResumenEvaluacionesConcurso(concursoId: string): Promise<{
