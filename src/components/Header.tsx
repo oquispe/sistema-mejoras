@@ -3,6 +3,7 @@
  */
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { User } from "../types";
 import { useAuth } from "../context/AuthContext";
 import EditarPerfil from "./EditarPerfil";
@@ -22,6 +23,7 @@ export default function Header({ currentTab, onChangeTab, currentUser: _currentU
   const [showEditProfile, setShowEditProfile] = useState(false);
 
   return (
+    <>
     <header className="bg-white/80 backdrop-blur-md border-b border-surface-200 sticky top-0 z-50 h-16 flex items-center">
       <div className="flex justify-between items-center w-full px-4 md:px-8 max-w-7xl mx-auto h-full">
         {/* Logo PROMEC */}
@@ -255,11 +257,14 @@ export default function Header({ currentTab, onChangeTab, currentUser: _currentU
         </div>
       </div>
 
-      {/* Modal Editar Perfil */}
+    </header>
+    {createPortal(
       <EditarPerfil
         isOpen={showEditProfile}
         onClose={() => setShowEditProfile(false)}
-      />
-    </header>
+      />,
+      document.body
+    )}
+    </>
   );
 }
