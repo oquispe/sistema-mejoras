@@ -147,10 +147,10 @@ export default function EditarPerfil({ isOpen, onClose }: EditarPerfilProps) {
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: "100%", opacity: 0 }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[95vh] sm:max-h-[90vh] overflow-y-auto"
+        className="bg-white w-full h-full sm:h-auto sm:max-w-md sm:rounded-2xl shadow-2xl overflow-hidden sm:max-h-[90vh] overflow-y-auto"
       >
         {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-[#eff4ff]">
+        <div className="flex justify-between items-center p-4 sm:p-6 border-b border-[#eff4ff] pt-12 sm:pt-6">
           <h2 className="text-lg font-bold text-primary">Editar perfil</h2>
           <button
             onClick={handleClose}
