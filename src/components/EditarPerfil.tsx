@@ -141,16 +141,16 @@ export default function EditarPerfil({ isOpen, onClose }: EditarPerfilProps) {
   const avatarActual = avatarPreview || profile?.avatar_url;
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
       <motion.div
-        initial={{ y: "100%", opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: "100%", opacity: 0 }}
-        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="bg-white w-full h-full sm:h-auto sm:max-w-md sm:rounded-2xl shadow-2xl overflow-hidden sm:max-h-[90vh] overflow-y-auto"
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="bg-white w-full max-w-md rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto"
       >
         {/* Header */}
-        <div className="flex justify-between items-center p-4 sm:p-6 border-b border-[#eff4ff] pt-12 sm:pt-6">
+        <div className="flex justify-between items-center p-6 border-b border-[#eff4ff]">
           <h2 className="text-lg font-bold text-primary">Editar perfil</h2>
           <button
             onClick={handleClose}
