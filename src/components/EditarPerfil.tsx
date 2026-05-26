@@ -141,152 +141,165 @@ export default function EditarPerfil({ isOpen, onClose }: EditarPerfilProps) {
   const avatarActual = avatarPreview || profile?.avatar_url;
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-      <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
-        transition={{ duration: 0.2 }}
-        className="bg-white w-full max-w-md rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto"
-      >
-        {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-[#eff4ff]">
-          <h2 className="text-lg font-bold text-primary">Editar perfil</h2>
-          <button
-            onClick={handleClose}
-            disabled={loading}
-            className="material-symbols-outlined text-xl text-on-surface-variant hover:text-on-surface disabled:opacity-50"
-          >
-            close
-          </button>
-        </div>
+    <>
+      {/* Overlay oscuro - click para cerrar */}
+      <div
+        className="fixed inset-0 bg-black/50 z-[100]"
+        onClick={handleClose}
+      />
 
-        {/* Formulario */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Avatar */}
-          <div className="flex flex-col items-center">
-            <div className="relative group">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-4 border-primary-100 bg-gray-100 shadow-lg">
-                {avatarActual ? (
-                  <img
-                    src={avatarActual}
-                    alt="Avatar"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-primary flex items-center justify-center text-white text-3xl sm:text-4xl font-bold">
-                    {nombre.charAt(0).toUpperCase() || '?'}
-                  </div>
-                )}
-              </div>
-
-              {/* Botón cambiar foto - siempre visible */}
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={loading}
-                className="absolute -bottom-1 -right-1 w-8 h-8 sm:w-10 sm:h-10 bg-gradient-primary text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform disabled:opacity-50 border-2 border-white"
-              >
-                <span className="material-symbols-outlined text-lg sm:text-xl">photo_camera</span>
-              </button>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/gif,image/webp"
-                onChange={handleImageSelect}
-                className="hidden"
-              />
-            </div>
-
-            {/* Botón cambiar foto */}
+      {/* Modal centrado */}
+      <div className="fixed inset-0 z-[101] flex items-center justify-center p-4 pointer-events-none">
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.95, opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="bg-white w-full max-w-md rounded-2xl shadow-2xl pointer-events-auto flex flex-col"
+          style={{ maxHeight: 'calc(100vh - 2rem)' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header - fijo arriba */}
+          <div className="flex justify-between items-center p-5 border-b border-gray-100 shrink-0">
+            <h2 className="text-lg font-bold text-primary">Editar perfil</h2>
             <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={loading}
-              className="mt-3 px-4 py-2 bg-primary-50 text-primary-600 rounded-xl text-sm font-medium hover:bg-primary-100 transition-colors flex items-center gap-2 disabled:opacity-50"
-            >
-              <span className="material-symbols-outlined text-lg">photo_camera</span>
-              Cambiar foto
-            </button>
-          </div>
-
-          {/* Nombre */}
-          <div>
-            <label className="block text-sm font-semibold text-on-surface mb-1">
-              Nombre completo
-            </label>
-            <input
-              type="text"
-              required
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              disabled={loading}
-              placeholder="Tu nombre completo"
-              className="w-full p-3 border border-[#cfd2d9] rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary disabled:bg-gray-50 disabled:text-gray-500"
-            />
-          </div>
-
-          {/* Área */}
-          <div>
-            <label className="block text-sm font-semibold text-on-surface mb-1">
-              Área de trabajo
-            </label>
-            <select
-              value={area}
-              onChange={(e) => setArea(e.target.value)}
-              disabled={loading}
-              className="w-full p-3 border border-[#cfd2d9] rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary disabled:bg-gray-50"
-            >
-              {AREAS_EJEMPLO.map((a) => (
-                <option key={a} value={a}>{a}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Error */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
-              <span className="material-symbols-outlined text-lg">error</span>
-              {error}
-            </div>
-          )}
-
-          {/* Éxito */}
-          {success && (
-            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
-              <span className="material-symbols-outlined text-lg">check_circle</span>
-              Perfil actualizado correctamente
-            </div>
-          )}
-
-          {/* Botones */}
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
               onClick={handleClose}
               disabled={loading}
-              className="flex-1 py-3 border border-[#cfd2d9] text-on-surface-variant rounded-xl font-semibold text-sm hover:bg-gray-50 disabled:opacity-50"
+              className="material-symbols-outlined text-xl text-gray-500 hover:text-gray-700 disabled:opacity-50"
             >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={loading || !nombre.trim()}
-              className="flex-1 py-3 bg-primary text-white rounded-xl font-semibold text-sm hover:bg-[#1e0fa3] disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span>
-                  Guardando...
-                </>
-              ) : (
-                'Guardar cambios'
-              )}
+              close
             </button>
           </div>
-        </form>
-      </motion.div>
-    </div>
+
+          {/* Contenido scrolleable */}
+          <div className="overflow-y-auto flex-1 p-5">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Avatar */}
+              <div className="flex flex-col items-center">
+                <div className="relative">
+                  <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-primary-100 bg-gray-100 shadow-lg">
+                    {avatarActual ? (
+                      <img
+                        src={avatarActual}
+                        alt="Avatar"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-primary flex items-center justify-center text-white text-4xl font-bold">
+                        {nombre.charAt(0).toUpperCase() || '?'}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Icono cámara en esquina */}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={loading}
+                    className="absolute -bottom-1 -right-1 w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors disabled:opacity-50 border-2 border-white"
+                  >
+                    <span className="material-symbols-outlined text-xl">photo_camera</span>
+                  </button>
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif,image/webp"
+                    onChange={handleImageSelect}
+                    className="hidden"
+                  />
+                </div>
+
+                {/* Botón texto cambiar foto */}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={loading}
+                  className="mt-3 px-4 py-2 bg-primary/10 text-primary rounded-xl text-sm font-medium hover:bg-primary/20 transition-colors flex items-center gap-2 disabled:opacity-50"
+                >
+                  <span className="material-symbols-outlined text-lg">photo_camera</span>
+                  Cambiar foto
+                </button>
+              </div>
+
+              {/* Nombre */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Nombre completo
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
+                  disabled={loading}
+                  placeholder="Tu nombre completo"
+                  className="w-full p-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary disabled:bg-gray-50 disabled:text-gray-500"
+                />
+              </div>
+
+              {/* Área */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Área de trabajo
+                </label>
+                <select
+                  value={area}
+                  onChange={(e) => setArea(e.target.value)}
+                  disabled={loading}
+                  className="w-full p-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary disabled:bg-gray-50"
+                >
+                  {AREAS_EJEMPLO.map((a) => (
+                    <option key={a} value={a}>{a}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Error */}
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
+                  <span className="material-symbols-outlined text-lg">error</span>
+                  {error}
+                </div>
+              )}
+
+              {/* Éxito */}
+              {success && (
+                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
+                  <span className="material-symbols-outlined text-lg">check_circle</span>
+                  Perfil actualizado correctamente
+                </div>
+              )}
+
+              {/* Botones */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  disabled={loading}
+                  className="flex-1 py-3 border border-gray-300 text-gray-600 rounded-xl font-semibold text-sm hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading || !nombre.trim()}
+                  className="flex-1 py-3 bg-primary text-white rounded-xl font-semibold text-sm hover:bg-primary/90 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span>
+                      Guardando...
+                    </>
+                  ) : (
+                    'Guardar cambios'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </motion.div>
+      </div>
+    </>
   );
 }
