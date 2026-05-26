@@ -113,7 +113,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-mesh flex flex-col lg:flex-row">
-      {/* Panel izquierdo - Branding (solo desktop) */}
+      {/* Panel izquierdo - Branding PROMEC (solo desktop) */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-hero relative overflow-hidden">
         {/* Patrón decorativo */}
         <div className="absolute inset-0 opacity-10">
@@ -123,29 +123,64 @@ export default function LoginPage() {
         </div>
 
         <div className="relative z-10 flex flex-col justify-center items-center w-full px-12 text-white">
-          {/* Logo grande */}
+          {/* Logo grande animado */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
             className="text-center"
           >
-            <div className="w-24 h-24 bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-lg border border-white/30">
-              <span className="material-symbols-outlined text-5xl">
-                trending_up
-              </span>
-            </div>
+            {/* Logo GIF */}
+            <motion.div
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+              className="mb-6"
+            >
+              <img
+                src="/logo.gif"
+                alt="PROMEC Logo"
+                className="w-40 h-40 mx-auto object-contain drop-shadow-2xl"
+              />
+            </motion.div>
 
-            <h1 className="text-4xl font-display font-bold mb-4">
-              Mejora Continua
-            </h1>
+            {/* Nombre PROMEC destacado */}
+            <motion.h1
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="text-6xl font-display font-black tracking-tight mb-2"
+              style={{ textShadow: '0 4px 20px rgba(0,0,0,0.3)' }}
+            >
+              PROMEC
+            </motion.h1>
 
-            <p className="text-xl text-white/80 mb-8 max-w-md">
+            {/* Subtítulo */}
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.7 }}
+              className="text-xl text-white/90 font-medium tracking-wide mb-4"
+            >
+              Proyectos de Mejora Continua
+            </motion.p>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.9 }}
+              className="text-base text-white/70 max-w-sm mx-auto"
+            >
               Transforma ideas en resultados. Comparte, colabora y celebra los logros de tu equipo.
-            </p>
+            </motion.p>
 
             {/* Stats decorativos */}
-            <div className="flex justify-center gap-8 mt-12">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.1 }}
+              className="flex justify-center gap-8 mt-12"
+            >
               <div className="text-center">
                 <div className="text-3xl font-bold">+150</div>
                 <div className="text-sm text-white/70">Mejoras activas</div>
@@ -160,12 +195,12 @@ export default function LoginPage() {
                 <div className="text-3xl font-bold">98%</div>
                 <div className="text-sm text-white/70">Satisfacción</div>
               </div>
-            </div>
+            </motion.div>
           </motion.div>
 
           {/* Footer del panel */}
           <div className="absolute bottom-8 left-0 right-0 text-center text-white/50 text-sm">
-            Sistema de Gestión de Mejoras © 2024
+            PROMEC © 2024 - Sistema de Gestión de Mejoras
           </div>
         </div>
       </div>
@@ -177,16 +212,19 @@ export default function LoginPage() {
           animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-md"
         >
-          {/* Logo móvil */}
+          {/* Logo móvil PROMEC */}
           <div className="lg:hidden text-center mb-8">
-            <div className="w-16 h-16 bg-gradient-primary rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-glow-primary">
-              <span className="material-symbols-outlined text-white text-3xl">
-                trending_up
-              </span>
-            </div>
-            <h1 className="text-2xl font-display font-bold text-surface-900">
-              Mejora Continua
+            <img
+              src="/logo.gif"
+              alt="PROMEC Logo"
+              className="w-20 h-20 mx-auto mb-3 object-contain"
+            />
+            <h1 className="text-3xl font-display font-black text-surface-900 tracking-tight">
+              PROMEC
             </h1>
+            <p className="text-sm text-surface-500 mt-1">
+              Proyectos de Mejora Continua
+            </p>
           </div>
 
           {/* Card del formulario */}
@@ -369,7 +407,7 @@ export default function LoginPage() {
 
           {/* Copyright móvil */}
           <p className="lg:hidden text-center text-sm text-surface-400 mt-6">
-            Sistema de Gestión de Mejoras © 2024
+            PROMEC © 2024
           </p>
         </motion.div>
       </div>

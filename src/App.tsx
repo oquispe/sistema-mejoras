@@ -371,9 +371,12 @@ export default function App() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#f0f4ff] to-[#e8f5f3] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 animate-pulse">
-            <span className="material-symbols-outlined text-white text-3xl">lightbulb</span>
-          </div>
+          <img
+            src="/logo.gif"
+            alt="PROMEC"
+            className="w-20 h-20 mx-auto mb-4"
+          />
+          <h1 className="text-2xl font-display font-black text-surface-900 tracking-tight mb-1">PROMEC</h1>
           <p className="text-on-surface-variant text-sm">Cargando...</p>
         </div>
       </div>

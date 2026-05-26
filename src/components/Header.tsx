@@ -24,19 +24,19 @@ export default function Header({ currentTab, onChangeTab, currentUser: _currentU
   return (
     <header className="bg-white/80 backdrop-blur-md border-b border-surface-200 sticky top-0 z-50 h-16 flex items-center">
       <div className="flex justify-between items-center w-full px-4 md:px-8 max-w-7xl mx-auto h-full">
-        {/* Logo */}
+        {/* Logo PROMEC */}
         <div
           onClick={() => onChangeTab("feed")}
           className="flex items-center gap-2 cursor-pointer group"
-          id="logo-innovatehub"
+          id="logo-promec"
         >
-          <div className="w-9 h-9 bg-gradient-primary rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-glow-primary transition-all duration-300">
-            <span className="material-symbols-outlined text-white text-xl">
-              trending_up
-            </span>
-          </div>
-          <span className="hidden sm:block font-display font-bold text-lg text-surface-900 group-hover:text-primary-600 transition-colors">
-            Mejora Continua
+          <img
+            src="/logo.gif"
+            alt="PROMEC"
+            className="w-9 h-9 object-contain group-hover:scale-110 transition-transform duration-300"
+          />
+          <span className="hidden sm:block font-display font-black text-lg text-surface-900 group-hover:text-primary-600 transition-colors tracking-tight">
+            PROMEC
           </span>
         </div>
 
