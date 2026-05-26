@@ -141,12 +141,13 @@ export default function EditarPerfil({ isOpen, onClose }: EditarPerfilProps) {
   const avatarActual = avatarPreview || profile?.avatar_url;
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
       <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden"
+        initial={{ y: "100%", opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: "100%", opacity: 0 }}
+        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+        className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[95vh] sm:max-h-[90vh] overflow-y-auto"
       >
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b border-[#eff4ff]">
@@ -165,7 +166,7 @@ export default function EditarPerfil({ isOpen, onClose }: EditarPerfilProps) {
           {/* Avatar */}
           <div className="flex flex-col items-center">
             <div className="relative group">
-              <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-primary-100 bg-gray-100 shadow-lg">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-4 border-primary-100 bg-gray-100 shadow-lg">
                 {avatarActual ? (
                   <img
                     src={avatarActual}
@@ -173,20 +174,10 @@ export default function EditarPerfil({ isOpen, onClose }: EditarPerfilProps) {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-primary flex items-center justify-center text-white text-4xl font-bold">
+                  <div className="w-full h-full bg-gradient-primary flex items-center justify-center text-white text-3xl sm:text-4xl font-bold">
                     {nombre.charAt(0).toUpperCase() || '?'}
                   </div>
                 )}
-
-                {/* Overlay para cambiar foto */}
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={loading}
-                  className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer disabled:cursor-not-allowed"
-                >
-                  <span className="material-symbols-outlined text-white text-3xl">photo_camera</span>
-                </button>
               </div>
 
               {/* Botón cambiar foto - siempre visible */}
@@ -194,9 +185,9 @@ export default function EditarPerfil({ isOpen, onClose }: EditarPerfilProps) {
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={loading}
-                className="absolute -bottom-1 -right-1 w-10 h-10 bg-gradient-primary text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform disabled:opacity-50 border-3 border-white"
+                className="absolute -bottom-1 -right-1 w-8 h-8 sm:w-10 sm:h-10 bg-gradient-primary text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform disabled:opacity-50 border-2 border-white"
               >
-                <span className="material-symbols-outlined text-xl">photo_camera</span>
+                <span className="material-symbols-outlined text-lg sm:text-xl">photo_camera</span>
               </button>
 
               <input
@@ -208,15 +199,15 @@ export default function EditarPerfil({ isOpen, onClose }: EditarPerfilProps) {
               />
             </div>
 
-            {/* Texto instructivo más visible */}
+            {/* Botón cambiar foto */}
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={loading}
-              className="mt-3 px-4 py-2 bg-primary-50 text-primary-600 rounded-lg text-sm font-medium hover:bg-primary-100 transition-colors flex items-center gap-2"
+              className="mt-3 px-4 py-2 bg-primary-50 text-primary-600 rounded-xl text-sm font-medium hover:bg-primary-100 transition-colors flex items-center gap-2 disabled:opacity-50"
             >
-              <span className="material-symbols-outlined text-lg">upload</span>
-              Cambiar foto de perfil
+              <span className="material-symbols-outlined text-lg">photo_camera</span>
+              Cambiar foto
             </button>
           </div>
 
