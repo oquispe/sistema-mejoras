@@ -14,6 +14,7 @@ interface SeleccionarProyectoModalProps {
   concurso: ConcursoConStats;
   proyectos: ProyectoConStats[];
   onPostulacionExitosa: () => void;
+  onCrearProyecto: () => void;
 }
 
 export default function SeleccionarProyectoModal({
@@ -22,12 +23,13 @@ export default function SeleccionarProyectoModal({
   concurso,
   proyectos,
   onPostulacionExitosa,
+  onCrearProyecto,
 }: SeleccionarProyectoModalProps) {
   const { user } = useAuth();
   const [procesando, setProcesando] = useState<string | null>(null);
   const [mensaje, setMensaje] = useState<{ tipo: 'exito' | 'error'; texto: string } | null>(null);
   const [proyectosYaPostulados, setProyectosYaPostulados] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // Filtrar solo proyectos del usuario actual
   const misProyectos = proyectos.filter(p => p.autor_id === user?.id);
@@ -131,11 +133,18 @@ export default function SeleccionarProyectoModal({
                 folder_off
               </span>
               <h4 className="text-lg font-semibold text-surface-700 mb-2">
-                No tienes proyectos
+                No tienes proyectos activos
               </h4>
-              <p className="text-surface-500 text-sm">
-                Primero debes crear un proyecto para poder postularlo a este concurso.
+              <p className="text-surface-500 text-sm mb-5">
+                Crea un proyecto para poder postularlo a este concurso.
               </p>
+              <button
+                onClick={onCrearProyecto}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-400 to-orange-500 text-white font-semibold rounded-xl shadow-md hover:scale-105 transition-all"
+              >
+                <span className="material-symbols-outlined text-lg">add_circle</span>
+                Crear mi proyecto
+              </button>
             </div>
           ) : (
             <div className="space-y-3">

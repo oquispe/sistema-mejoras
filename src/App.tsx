@@ -1417,6 +1417,14 @@ export default function App() {
             cargarConcursosActivos();
             triggerToast("¡Proyecto postulado al concurso!");
           }}
+          onCrearProyecto={() => {
+            const concursoId = concursoParaPostular!.id;
+            setShowSeleccionarProyectoModal(false);
+            setConcursoParaPostular(null);
+            resetForm();
+            setFormConcursoId(concursoId);
+            setShowPublishModal(true);
+          }}
         />
       )}
 
